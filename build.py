@@ -21,6 +21,10 @@ import sys
 import time
 from pathlib import Path
 
+# Windows 콘솔 기본 코드페이지(cp949)로는 이 스크립트의 한글 출력이 깨진다.
+if sys.stdout is not None and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).parent
 CONTENT = ROOT / "content"
 TOC_PATH = CONTENT / "toc.json"
