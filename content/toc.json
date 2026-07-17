@@ -1,0 +1,312 @@
+{
+  "meta": {
+    "title": "파이썬 완전 정복",
+    "subtitle": "기초부터 ROS·ML·DL·Vision·AI까지",
+    "pyversion": "3.14"
+  },
+  "parts": [
+    {
+      "id": "start",
+      "num": "Part 0",
+      "title": "시작하기",
+      "desc": "2026년 기준의 파이썬 개발 환경을 처음부터 올바르게 세운다. uv, ruff, pyright, 디버거.",
+      "chapters": [
+        { "num": "0.1", "id": "how-to-read", "title": "이 책을 읽는 법", "desc": "학습 경로, 표기 규칙, 실습 방법" },
+        { "num": "0.2", "id": "install", "title": "파이썬 3.14 설치와 버전 관리", "desc": "인터프리터 종류, 버전 전환, PATH" },
+        { "num": "0.3", "id": "uv", "title": "uv로 프로젝트·가상환경·의존성 관리", "desc": "pip/venv/poetry를 대체하는 현대적 워크플로" },
+        { "num": "0.4", "id": "tooling", "title": "린터·포매터·타입체커 세팅", "desc": "ruff, pyright, pre-commit" },
+        { "num": "0.5", "id": "repl-debug", "title": "REPL, pdb, 주피터", "desc": "3.13+ 새 REPL, 디버깅 습관" }
+      ]
+    },
+    {
+      "id": "core",
+      "num": "Part I",
+      "title": "언어의 코어",
+      "desc": "객체 모델부터 제너레이터까지. 문법을 외우는 게 아니라 파이썬이 왜 그렇게 동작하는지를 이해한다.",
+      "chapters": [
+        { "num": "1.1", "id": "objects-names", "title": "객체, 이름, 참조 — 실행 모델", "desc": "변수는 상자가 아니다. id, 가변성, 얕은/깊은 복사" },
+        { "num": "1.2", "id": "numbers", "title": "숫자와 수치 연산", "desc": "임의 정밀도 int, float의 함정, Decimal, Fraction" },
+        { "num": "1.3", "id": "sequences", "title": "시퀀스: list, tuple, range", "desc": "내부 구조, 슬라이싱, 증폭 비용" },
+        { "num": "1.4", "id": "strings", "title": "문자열과 유니코드", "desc": "코드포인트, 정규화, f-string 심화" },
+        { "num": "1.5", "id": "bytes", "title": "bytes, bytearray, memoryview", "desc": "인코딩, 제로카피 슬라이싱, 버퍼 프로토콜" },
+        { "num": "1.6", "id": "dict", "title": "dict — 해시 테이블의 내부", "desc": "compact dict, 해시 충돌, 순서 보장" },
+        { "num": "1.7", "id": "sets", "title": "set과 frozenset", "desc": "집합 연산, 해시 가능성" },
+        { "num": "1.8", "id": "control-flow", "title": "제어 흐름과 match 문", "desc": "구조적 패턴 매칭 완전 정복" },
+        { "num": "1.9", "id": "comprehensions", "title": "컴프리헨션과 제너레이터 표현식", "desc": "언제 쓰고 언제 쓰지 말아야 하는가" },
+        { "num": "1.10", "id": "functions", "title": "함수: 인자, 스코프, 클로저", "desc": "*args/**kwargs, 기본값 함정, LEGB, cell 변수" },
+        { "num": "1.11", "id": "decorators", "title": "데코레이터", "desc": "함수·클래스 데코레이터, 인자 있는 데코레이터, functools.wraps" },
+        { "num": "1.12", "id": "classes", "title": "클래스와 데이터 모델", "desc": "__slots__, 프로퍼티, 클래스 변수의 함정" },
+        { "num": "1.13", "id": "inheritance", "title": "상속, MRO, 컴포지션", "desc": "C3 선형화, super()의 진짜 의미, 믹스인" },
+        { "num": "1.14", "id": "dunder", "title": "특수 메서드 총정리", "desc": "연산자 오버로딩, 컨테이너 프로토콜, 비교와 해시" },
+        { "num": "1.15", "id": "protocols", "title": "프로토콜, ABC, 덕 타이핑", "desc": "collections.abc, 가상 서브클래스" },
+        { "num": "1.16", "id": "exceptions", "title": "예외와 예외 그룹", "desc": "계층 구조, 체이닝, ExceptionGroup, except*" },
+        { "num": "1.17", "id": "context-managers", "title": "컨텍스트 매니저", "desc": "with의 내부, contextlib, ExitStack" },
+        { "num": "1.18", "id": "iterators", "title": "이터레이터와 제너레이터", "desc": "프로토콜, yield from, 코루틴으로 가는 길" },
+        { "num": "1.19", "id": "imports", "title": "모듈, 패키지, import 시스템", "desc": "sys.path, 순환 import, 지연 import" }
+      ]
+    },
+    {
+      "id": "typing",
+      "num": "Part II",
+      "title": "타입 시스템",
+      "desc": "동적 언어에 정적 안전망을 얹는다. 대규모 코드베이스와 협업의 전제 조건.",
+      "chapters": [
+        { "num": "2.1", "id": "why-typing", "title": "왜 타입 힌트인가", "desc": "점진적 타이핑의 철학과 한계" },
+        { "num": "2.2", "id": "typing-basics", "title": "타입 문법의 기초", "desc": "기본 어노테이션, Optional, Union, Callable" },
+        { "num": "2.3", "id": "pep695", "title": "PEP 695: 새 제네릭 문법", "desc": "type 문, def f[T](...), 3.12+ 스타일" },
+        { "num": "2.4", "id": "protocol-typing", "title": "Protocol과 구조적 서브타이핑", "desc": "정적 덕 타이핑, 런타임 체크" },
+        { "num": "2.5", "id": "typed-containers", "title": "TypedDict, NamedTuple, Literal, Final", "desc": "구조화된 데이터에 타입 입히기" },
+        { "num": "2.6", "id": "dataclasses", "title": "dataclasses 완전 정복", "desc": "field, __post_init__, frozen, slots" },
+        { "num": "2.7", "id": "pydantic", "title": "attrs와 pydantic v2", "desc": "런타임 검증, 직렬화, 설정 관리" },
+        { "num": "2.8", "id": "typecheckers", "title": "mypy와 pyright 실전", "desc": "설정, strict 모드, 점진적 도입 전략" },
+        { "num": "2.9", "id": "runtime-typing", "title": "런타임 타입 정보와 리플렉션", "desc": "get_type_hints, Annotated, 어노테이션 지연 평가" }
+      ]
+    },
+    {
+      "id": "meta",
+      "num": "Part III",
+      "title": "함수형과 메타프로그래밍",
+      "desc": "파이썬으로 파이썬을 조작한다. 프레임워크가 마법처럼 보이지 않게 되는 지점.",
+      "chapters": [
+        { "num": "3.1", "id": "functools", "title": "일급 함수와 functools", "desc": "partial, reduce, lru_cache, singledispatch" },
+        { "num": "3.2", "id": "itertools", "title": "itertools 완전 정복", "desc": "무한 이터레이터, 조합론, 그룹핑, 레시피" },
+        { "num": "3.3", "id": "descriptors", "title": "디스크립터", "desc": "property·method·classmethod가 만들어지는 원리" },
+        { "num": "3.4", "id": "metaclass", "title": "메타클래스와 __init_subclass__", "desc": "클래스 생성 가로채기, 언제 쓰지 말아야 하는가" },
+        { "num": "3.5", "id": "dynamic-attrs", "title": "__getattr__ 계열과 동적 속성", "desc": "프록시, 지연 로딩, 모듈 레벨 __getattr__" },
+        { "num": "3.6", "id": "ast", "title": "AST와 코드 생성", "desc": "파싱, 변환, exec/compile" },
+        { "num": "3.7", "id": "bytecode", "title": "바이트코드와 dis", "desc": "CPython 실행 구조, 3.11+ 특수화 인터프리터" }
+      ]
+    },
+    {
+      "id": "concurrency",
+      "num": "Part IV",
+      "title": "동시성과 병렬성",
+      "desc": "GIL을 이해하고, free-threaded 시대의 선택지를 안다. asyncio를 실전 수준으로.",
+      "chapters": [
+        { "num": "4.1", "id": "concurrency-map", "title": "동시성 모델 지도", "desc": "I/O 바운드 vs CPU 바운드, 무엇을 언제" },
+        { "num": "4.2", "id": "threading", "title": "threading과 동기화", "desc": "Lock, Condition, Queue, 경쟁 상태" },
+        { "num": "4.3", "id": "gil", "title": "GIL, 그리고 free-threaded 파이썬", "desc": "3.13/3.14 no-GIL 빌드의 실제" },
+        { "num": "4.4", "id": "multiprocessing", "title": "multiprocessing과 공유 메모리", "desc": "spawn/fork, 피클링, shared_memory" },
+        { "num": "4.5", "id": "futures", "title": "concurrent.futures", "desc": "Executor 추상화, 통일된 인터페이스" },
+        { "num": "4.6", "id": "asyncio-basics", "title": "asyncio 기초: 코루틴과 이벤트 루프", "desc": "await가 실제로 하는 일" },
+        { "num": "4.7", "id": "asyncio-advanced", "title": "asyncio 실전", "desc": "TaskGroup, 취소, 타임아웃, 백프레셔" },
+        { "num": "4.8", "id": "async-eco", "title": "비동기 생태계", "desc": "httpx, anyio, trio, aiofiles, 동기 코드와의 경계" },
+        { "num": "4.9", "id": "subinterpreters", "title": "서브인터프리터 (PEP 734)", "desc": "3.13+ 새로운 병렬 실행 축" }
+      ]
+    },
+    {
+      "id": "performance",
+      "num": "Part V",
+      "title": "성능",
+      "desc": "느린 파이썬을 빠르게. 측정 → 병목 파악 → 올바른 도구 선택.",
+      "chapters": [
+        { "num": "5.1", "id": "profiling", "title": "측정 없이 최적화 없다", "desc": "timeit, cProfile, py-spy, line_profiler" },
+        { "num": "5.2", "id": "memory", "title": "메모리 모델과 측정", "desc": "참조 카운팅, GC, tracemalloc, 누수 추적" },
+        { "num": "5.3", "id": "py-optimize", "title": "파이썬 레벨 최적화", "desc": "지역 변수, 내장 함수, 자료구조 선택, 캐싱" },
+        { "num": "5.4", "id": "c-ext", "title": "C 확장, ctypes, cffi", "desc": "네이티브 코드 호출, GIL 해제" },
+        { "num": "5.5", "id": "compilers", "title": "Cython, Numba, mypyc", "desc": "언제 무엇을 쓰는가, 실측 비교" },
+        { "num": "5.6", "id": "pyo3", "title": "Rust 확장 (PyO3) 맛보기", "desc": "maturin으로 만드는 고성능 모듈" }
+      ]
+    },
+    {
+      "id": "quality",
+      "num": "Part VI",
+      "title": "품질과 배포",
+      "desc": "돌아가는 코드와 신뢰할 수 있는 코드의 차이.",
+      "chapters": [
+        { "num": "6.1", "id": "pytest", "title": "pytest 완전 정복", "desc": "assert 재작성, 테스트 구조, 좋은 테스트란" },
+        { "num": "6.2", "id": "pytest-advanced", "title": "fixture, 파라미터화, mocking", "desc": "의존성 격리, monkeypatch, 테스트 더블" },
+        { "num": "6.3", "id": "hypothesis", "title": "속성 기반 테스트 (Hypothesis)", "desc": "예제가 아니라 성질을 검증한다" },
+        { "num": "6.4", "id": "logging", "title": "로깅과 관측성", "desc": "logging 계층, 구조화 로깅, 트레이싱" },
+        { "num": "6.5", "id": "packaging", "title": "패키징: pyproject.toml부터 배포까지", "desc": "빌드 백엔드, wheel, 배포" },
+        { "num": "6.6", "id": "ci", "title": "CI/CD와 pre-commit", "desc": "GitHub Actions, 매트릭스 테스트" },
+        { "num": "6.7", "id": "docker", "title": "도커와 재현 가능한 환경", "desc": "멀티스테이지, GPU 이미지, 락파일" }
+      ]
+    },
+    {
+      "id": "algo",
+      "num": "Part VII",
+      "title": "자료구조와 알고리즘",
+      "desc": "코딩테스트와 실무 양쪽의 기반. 모든 코드는 파이썬 관용구와 실제 실행 비용까지 함께 본다.",
+      "chapters": [
+        { "num": "7.1", "id": "complexity", "title": "시간·공간 복잡도", "desc": "빅오, 상수의 무게, 파이썬에서의 실제 의미" },
+        { "num": "7.2", "id": "py-ds-cost", "title": "파이썬 자료구조의 실제 비용", "desc": "list/dict/set/deque 연산별 복잡도 표" },
+        { "num": "7.3", "id": "two-pointers", "title": "배열, 투 포인터, 슬라이딩 윈도우", "desc": "누적합, 구간 처리" },
+        { "num": "7.4", "id": "sorting", "title": "정렬", "desc": "Timsort의 내부, key와 안정성, 커스텀 정렬" },
+        { "num": "7.5", "id": "binary-search", "title": "이분 탐색", "desc": "bisect, 매개변수 탐색(파라메트릭 서치)" },
+        { "num": "7.6", "id": "hashing", "title": "해시", "desc": "dict/set 활용 패턴, Counter, defaultdict" },
+        { "num": "7.7", "id": "stack-queue", "title": "스택과 큐", "desc": "deque, 단조 스택, 괄호 문제" },
+        { "num": "7.8", "id": "heap", "title": "힙과 우선순위 큐", "desc": "heapq, 최대 힙 트릭, k번째 원소" },
+        { "num": "7.9", "id": "linked-list", "title": "연결 리스트", "desc": "포인터 조작, 사이클 검출" },
+        { "num": "7.10", "id": "tree", "title": "트리와 이진 탐색 트리", "desc": "순회, 재귀/반복 구현, LCA" },
+        { "num": "7.11", "id": "trie", "title": "트라이", "desc": "문자열 집합 검색, 자동완성" },
+        { "num": "7.12", "id": "union-find", "title": "유니온 파인드", "desc": "경로 압축, 랭크, 응용" },
+        { "num": "7.13", "id": "graph", "title": "그래프 표현과 순회", "desc": "인접 리스트/행렬, 재귀 깊이 문제" },
+        { "num": "7.14", "id": "bfs-dfs", "title": "BFS/DFS 응용", "desc": "최단 거리, 연결 요소, 플러드 필, 0-1 BFS" },
+        { "num": "7.15", "id": "shortest-path", "title": "최단 경로", "desc": "다익스트라, 벨만-포드, 플로이드-워셜, A*" },
+        { "num": "7.16", "id": "mst", "title": "최소 신장 트리", "desc": "크루스칼, 프림" },
+        { "num": "7.17", "id": "topological", "title": "위상 정렬과 DAG", "desc": "선후 관계, DAG 최장 경로" },
+        { "num": "7.18", "id": "backtracking", "title": "재귀와 백트래킹", "desc": "가지치기, 순열/조합 생성, N-Queen" },
+        { "num": "7.19", "id": "greedy", "title": "그리디", "desc": "교환 논증, 정당성 증명" },
+        { "num": "7.20", "id": "dp-basics", "title": "동적 계획법 기초", "desc": "점화식 세우기, 메모이제이션 vs 타뷸레이션" },
+        { "num": "7.21", "id": "dp-advanced", "title": "동적 계획법 심화", "desc": "배낭, LIS, LCS, 구간 DP, 비트마스크 DP, 트리 DP" },
+        { "num": "7.22", "id": "string-algo", "title": "문자열 알고리즘", "desc": "KMP, 라빈-카프, Z, 접미사 배열" },
+        { "num": "7.23", "id": "math-algo", "title": "수학과 정수론", "desc": "소수, GCD, 모듈러, 조합론, 확장 유클리드" },
+        { "num": "7.24", "id": "bitmask", "title": "비트마스크", "desc": "집합 표현, 부분집합 순회" },
+        { "num": "7.25", "id": "segment-tree", "title": "세그먼트 트리와 펜윅 트리", "desc": "구간 질의, 레이지 프로퍼게이션" },
+        { "num": "7.26", "id": "geometry", "title": "기하 알고리즘", "desc": "CCW, 볼록 껍질, 선분 교차" }
+      ]
+    },
+    {
+      "id": "cote",
+      "num": "Part VIII",
+      "title": "코딩테스트 실전",
+      "desc": "아는 것과 시험장에서 통과하는 것은 다르다. 파이썬으로 시간 초과 없이 뚫는 법.",
+      "chapters": [
+        { "num": "8.1", "id": "cote-strategy", "title": "코딩테스트의 구조와 전략", "desc": "시간 배분, 부분 점수, 제출 전 체크리스트" },
+        { "num": "8.2", "id": "io-optimize", "title": "파이썬 입출력 최적화", "desc": "sys.stdin, 버퍼링, 대용량 입력" },
+        { "num": "8.3", "id": "tle", "title": "시간 초과를 피하는 관용구", "desc": "파이썬이 느린 지점과 우회로" },
+        { "num": "8.4", "id": "problem-signals", "title": "문제 유형 분류와 신호 읽기", "desc": "제약 조건에서 알고리즘 역추론" },
+        { "num": "8.5", "id": "company-types", "title": "기업별 출제 경향", "desc": "삼성·카카오·네이버·라인·쿠팡·토스" },
+        { "num": "8.6", "id": "drill-impl", "title": "실전 풀이 I — 구현/시뮬레이션", "desc": "삼성형 문제 정복" },
+        { "num": "8.7", "id": "drill-search", "title": "실전 풀이 II — 탐색/그래프", "desc": "BFS/DFS/다익스트라 응용" },
+        { "num": "8.8", "id": "drill-dp", "title": "실전 풀이 III — DP", "desc": "점화식 도출 훈련" },
+        { "num": "8.9", "id": "drill-hard", "title": "실전 풀이 IV — 고난도", "desc": "복합 유형, 고급 자료구조" },
+        { "num": "8.10", "id": "templates", "title": "실전 템플릿 모음", "desc": "바로 붙여 쓰는 검증된 코드" }
+      ]
+    },
+    {
+      "id": "numeric",
+      "num": "Part IX",
+      "title": "수치 계산과 데이터",
+      "desc": "ML·DL·비전의 공통 기반. NumPy를 제대로 알면 나머지가 쉬워진다.",
+      "chapters": [
+        { "num": "9.1", "id": "numpy-basics", "title": "NumPy: ndarray의 모든 것", "desc": "dtype, shape, 인덱싱, 뷰 vs 복사" },
+        { "num": "9.2", "id": "broadcasting", "title": "브로드캐스팅과 벡터화", "desc": "반복문을 지우는 사고법" },
+        { "num": "9.3", "id": "numpy-advanced", "title": "NumPy 고급", "desc": "스트라이드, ufunc, einsum, 메모리 레이아웃" },
+        { "num": "9.4", "id": "linalg", "title": "선형대수", "desc": "행렬 분해, 최소자승, 고윳값 — 코드로 이해하기" },
+        { "num": "9.5", "id": "pandas-basics", "title": "pandas 기초", "desc": "Series, DataFrame, 인덱싱, 결측치" },
+        { "num": "9.6", "id": "pandas-advanced", "title": "pandas 실전", "desc": "groupby, merge, 시계열, 성능 함정" },
+        { "num": "9.7", "id": "polars", "title": "polars와 Apache Arrow", "desc": "지연 실행, 표현식 API, pandas와의 비교" },
+        { "num": "9.8", "id": "scipy", "title": "SciPy", "desc": "최적화, 보간, 신호 처리, 희소 행렬" },
+        { "num": "9.9", "id": "matplotlib", "title": "matplotlib과 시각화", "desc": "객체지향 API, 논문급 그림 만들기" }
+      ]
+    },
+    {
+      "id": "ml",
+      "num": "Part X",
+      "title": "머신러닝",
+      "desc": "scikit-learn을 축으로 한 고전 ML. 딥러닝 이전에 반드시 갖춰야 할 감각.",
+      "chapters": [
+        { "num": "10.1", "id": "ml-workflow", "title": "ML 문제 정의와 워크플로", "desc": "무엇을 예측할 것인가부터" },
+        { "num": "10.2", "id": "preprocessing", "title": "데이터 전처리와 파이프라인", "desc": "누수 없는 전처리, ColumnTransformer" },
+        { "num": "10.3", "id": "linear-models", "title": "선형 모델", "desc": "회귀, 로지스틱, 규제, 해석" },
+        { "num": "10.4", "id": "trees", "title": "트리 기반 모델과 부스팅", "desc": "랜덤 포레스트, XGBoost, LightGBM, CatBoost" },
+        { "num": "10.5", "id": "classic-models", "title": "SVM, kNN, 나이브 베이즈", "desc": "커널 트릭, 거리 기반 사고" },
+        { "num": "10.6", "id": "unsupervised", "title": "비지도 학습", "desc": "K-means, DBSCAN, PCA, t-SNE, UMAP" },
+        { "num": "10.7", "id": "evaluation", "title": "모델 평가와 검증", "desc": "교차검증, 지표 선택, 불균형 데이터" },
+        { "num": "10.8", "id": "hpo", "title": "하이퍼파라미터 최적화", "desc": "그리드/랜덤/베이지안, Optuna" },
+        { "num": "10.9", "id": "feature-eng", "title": "특징 공학", "desc": "도메인 지식을 숫자로" },
+        { "num": "10.10", "id": "mlops-basics", "title": "실험 관리와 재현성", "desc": "시드, 버전 관리, MLflow" }
+      ]
+    },
+    {
+      "id": "dl",
+      "num": "Part XI",
+      "title": "딥러닝",
+      "desc": "PyTorch로 밑바닥부터. 남의 코드를 복붙하는 게 아니라 직접 설계하고 디버깅하는 수준까지.",
+      "chapters": [
+        { "num": "11.1", "id": "nn-math", "title": "신경망의 수학적 기초", "desc": "역전파를 NumPy로 직접 구현" },
+        { "num": "11.2", "id": "torch-tensor", "title": "PyTorch 텐서", "desc": "디바이스, dtype, 뷰, 인플레이스" },
+        { "num": "11.3", "id": "autograd", "title": "autograd", "desc": "계산 그래프, 그래디언트 흐름 디버깅" },
+        { "num": "11.4", "id": "nn-module", "title": "nn.Module과 모델 설계", "desc": "파라미터, 버퍼, 초기화, 훅" },
+        { "num": "11.5", "id": "dataloader", "title": "데이터 로딩 파이프라인", "desc": "Dataset, DataLoader, 증강, 병목 해소" },
+        { "num": "11.6", "id": "training-loop", "title": "학습 루프와 최적화", "desc": "옵티마이저, 스케줄러, AMP, 그래디언트 클리핑" },
+        { "num": "11.7", "id": "regularization", "title": "정규화와 일반화", "desc": "BatchNorm/LayerNorm, 드롭아웃, 과적합 진단" },
+        { "num": "11.8", "id": "cnn", "title": "CNN", "desc": "합성곱 연산, ResNet, 수용 영역" },
+        { "num": "11.9", "id": "rnn", "title": "RNN, LSTM, 시퀀스 모델링", "desc": "시간 축 처리, 패딩과 마스킹" },
+        { "num": "11.10", "id": "transformer", "title": "어텐션과 트랜스포머", "desc": "밑바닥부터 구현하기" },
+        { "num": "11.11", "id": "transfer", "title": "전이 학습과 파인튜닝", "desc": "프리즈, 레이어별 학습률, 도메인 적응" },
+        { "num": "11.12", "id": "generative", "title": "생성 모델", "desc": "AE, VAE, GAN, Diffusion" },
+        { "num": "11.13", "id": "distributed", "title": "분산 학습", "desc": "DDP, FSDP, 멀티 GPU 실전" },
+        { "num": "11.14", "id": "inference", "title": "추론 최적화와 배포", "desc": "TorchScript, ONNX, TensorRT, 양자화" }
+      ]
+    },
+    {
+      "id": "vision",
+      "num": "Part XII",
+      "title": "컴퓨터 비전",
+      "desc": "고전 영상처리와 딥러닝 비전을 모두. 로봇에 눈을 달기 위한 전제.",
+      "chapters": [
+        { "num": "12.1", "id": "image-basics", "title": "디지털 이미지의 표현", "desc": "색공간, 비트 깊이, 좌표계 혼란 정리" },
+        { "num": "12.2", "id": "opencv", "title": "OpenCV 입문", "desc": "입출력, 기본 연산, NumPy와의 관계" },
+        { "num": "12.3", "id": "filtering", "title": "필터링과 엣지 검출", "desc": "컨볼루션, 가우시안, Canny, 모폴로지" },
+        { "num": "12.4", "id": "features", "title": "특징점과 매칭", "desc": "Harris, SIFT, ORB, RANSAC" },
+        { "num": "12.5", "id": "geometry-transform", "title": "기하 변환과 호모그래피", "desc": "어파인, 원근, 파노라마 스티칭" },
+        { "num": "12.6", "id": "calibration", "title": "카메라 모델과 캘리브레이션", "desc": "핀홀 모델, 왜곡 보정, 내부/외부 파라미터" },
+        { "num": "12.7", "id": "stereo", "title": "스테레오와 깊이", "desc": "에피폴라 기하, 시차, 깊이 카메라" },
+        { "num": "12.8", "id": "classification", "title": "이미지 분류 딥러닝", "desc": "전이학습 실전, 데이터 증강" },
+        { "num": "12.9", "id": "detection", "title": "객체 검출", "desc": "YOLO 계열, 앵커, NMS, mAP" },
+        { "num": "12.10", "id": "segmentation", "title": "세그멘테이션", "desc": "U-Net, Mask R-CNN, SAM" },
+        { "num": "12.11", "id": "tracking", "title": "객체 추적", "desc": "칼만 필터, SORT/DeepSORT, 옵티컬 플로우" },
+        { "num": "12.12", "id": "pointcloud", "title": "3D 비전과 포인트 클라우드", "desc": "Open3D, ICP, 평면 검출, LiDAR" },
+        { "num": "12.13", "id": "vit", "title": "비전 트랜스포머와 파운데이션 모델", "desc": "ViT, CLIP, DINO, 제로샷" }
+      ]
+    },
+    {
+      "id": "ros",
+      "num": "Part XIII",
+      "title": "ROS 2",
+      "desc": "로봇 소프트웨어의 표준. rclpy로 노드부터 자율주행·매니퓰레이션까지.",
+      "chapters": [
+        { "num": "13.1", "id": "ros-intro", "title": "ROS 2 개요와 설치", "desc": "ROS 1과의 차이, 배포판 선택" },
+        { "num": "13.2", "id": "ros-workspace", "title": "워크스페이스, 패키지, colcon", "desc": "빌드 시스템과 오버레이" },
+        { "num": "13.3", "id": "rclpy-node", "title": "rclpy 노드", "desc": "실행 모델, 스핀, 콜백 그룹" },
+        { "num": "13.4", "id": "topics", "title": "토픽", "desc": "발행/구독, 메시지 정의, 성능" },
+        { "num": "13.5", "id": "services", "title": "서비스", "desc": "요청/응답, 비동기 호출의 함정" },
+        { "num": "13.6", "id": "actions", "title": "액션", "desc": "장시간 작업, 피드백, 취소" },
+        { "num": "13.7", "id": "params-launch", "title": "파라미터와 launch", "desc": "설정 관리, 파이썬 launch 파일" },
+        { "num": "13.8", "id": "qos", "title": "QoS와 DDS", "desc": "신뢰성, 내구성, 통신이 안 되는 이유" },
+        { "num": "13.9", "id": "tf2", "title": "TF2 좌표 변환", "desc": "프레임 트리, 시간 동기화, 흔한 오류" },
+        { "num": "13.10", "id": "urdf", "title": "URDF와 로봇 모델", "desc": "링크, 조인트, xacro, 시각화" },
+        { "num": "13.11", "id": "gazebo", "title": "Gazebo 시뮬레이션", "desc": "물리 엔진, 센서 플러그인, 월드" },
+        { "num": "13.12", "id": "sensors", "title": "센서 데이터 처리", "desc": "카메라, LiDAR, IMU, 동기화" },
+        { "num": "13.13", "id": "nav2", "title": "Nav2 자율주행", "desc": "SLAM, 코스트맵, 플래너, 컨트롤러" },
+        { "num": "13.14", "id": "moveit", "title": "MoveIt 2 매니퓰레이션", "desc": "역기구학, 모션 플래닝, 파지" },
+        { "num": "13.15", "id": "ros-debug", "title": "rosbag, 디버깅, 성능", "desc": "기록/재생, 실시간성, 프로파일링" },
+        { "num": "13.16", "id": "ros-dl", "title": "ROS 2 + 딥러닝 통합", "desc": "추론 노드 설계, 지연 관리" }
+      ]
+    },
+    {
+      "id": "ai",
+      "num": "Part XIV",
+      "title": "AI 응용",
+      "desc": "LLM 시대의 실전. 원리를 알고 쓰는 것과 API만 호출하는 것의 차이.",
+      "chapters": [
+        { "num": "14.1", "id": "llm-basics", "title": "LLM 동작 원리", "desc": "토크나이저, 샘플링, KV 캐시, 컨텍스트" },
+        { "num": "14.2", "id": "hf-transformers", "title": "transformers 라이브러리", "desc": "모델 로딩, 파이프라인, 생성 제어" },
+        { "num": "14.3", "id": "prompting", "title": "프롬프트와 구조화 출력", "desc": "설계 원칙, JSON 스키마, 함수 호출" },
+        { "num": "14.4", "id": "embeddings", "title": "임베딩과 벡터 검색", "desc": "의미 유사도, FAISS, 하이브리드 검색" },
+        { "num": "14.5", "id": "rag", "title": "RAG 설계", "desc": "청킹, 리랭킹, 평가, 실패 모드" },
+        { "num": "14.6", "id": "agents", "title": "에이전트와 도구 사용", "desc": "루프 설계, 도구 정의, MCP" },
+        { "num": "14.7", "id": "finetuning", "title": "파인튜닝: LoRA/QLoRA", "desc": "데이터셋 구성, PEFT, 평가" },
+        { "num": "14.8", "id": "multimodal", "title": "멀티모달", "desc": "VLM, 이미지 이해, 로봇 적용" },
+        { "num": "14.9", "id": "serving", "title": "서빙과 최적화", "desc": "vLLM, 양자화, 배치, 스트리밍" },
+        { "num": "14.10", "id": "llm-eval", "title": "평가와 안전성", "desc": "벤치마크, LLM-as-judge, 한계 인식" }
+      ]
+    },
+    {
+      "id": "capstone",
+      "num": "Part XV",
+      "title": "통합 프로젝트",
+      "desc": "배운 것을 하나로. 설계부터 동작하는 시스템까지.",
+      "chapters": [
+        { "num": "15.1", "id": "project-design", "title": "프로젝트 설계 방법론", "desc": "요구사항에서 아키텍처로" },
+        { "num": "15.2", "id": "cap-vision", "title": "캡스톤 I: 실시간 비전 파이프라인", "desc": "검출 + 추적 + 계측" },
+        { "num": "15.3", "id": "cap-ros", "title": "캡스톤 II: ROS 2 자율 주행 로봇", "desc": "인지-판단-제어 통합" },
+        { "num": "15.4", "id": "cap-vla", "title": "캡스톤 III: 비전-언어 로봇 에이전트", "desc": "자연어 명령으로 움직이는 로봇" },
+        { "num": "15.5", "id": "next-steps", "title": "다음 단계", "desc": "여기서 어디로 갈 것인가" }
+      ]
+    }
+  ]
+}

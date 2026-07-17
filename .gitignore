@@ -1,0 +1,15 @@
+# assets/bundle.js 는 빌드 산출물이지만 일부러 커밋한다.
+# 휴대폰에서는 build.py 를 돌릴 수 없으므로, 레포를 받으면 바로 열려야 한다.
+
+# 파이썬
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 편집기 / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
