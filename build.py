@@ -212,11 +212,26 @@ def serve(port: int) -> None:
             print("\n종료합니다.")
 
 
+def lint_content() -> None:
+    """아스키 다이어그램 정렬 검사. 실패해도 빌드는 막지 않는다."""
+    checker = ROOT / "tools" / "check_diagrams.py"
+    if not checker.exists():
+        return
+    import subprocess
+
+    r = subprocess.run(
+        [sys.executable, str(checker)], capture_output=True, text=True, encoding="utf-8"
+    )
+    if r.returncode != 0:
+        print(r.stdout.strip())
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="파이썬 완전 정복 — 빌드 스크립트")
     ap.add_argument("--watch", action="store_true", help="파일 변경 시 자동 재빌드")
     ap.add_argument("--serve", action="store_true", help="로컬 서버 실행 (휴대폰 접속용)")
     ap.add_argument("--port", type=int, default=8800)
+    ap.add_argument("--no-lint", action="store_true", help="다이어그램 검사 건너뛰기")
     args = ap.parse_args()
 
     if args.serve:
@@ -225,6 +240,8 @@ def main() -> None:
         watch()
     else:
         report(build())
+        if not args.no_lint:
+            lint_content()
 
 
 if __name__ == "__main__":
