@@ -7,6 +7,9 @@ __pycache__/
 .venv/
 venv/
 
+# 집필 중 사실 검증에 쓰는 일회성 벤치마크/실험 스크립트. 책의 결과물이 아니다.
+scratchpad/
+
 # 편집기 / OS
 .vscode/
 .idea/
