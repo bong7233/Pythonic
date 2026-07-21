@@ -16,3 +16,6 @@ scratchpad/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# git-bash에서 Windows용 `> nul` 리다이렉트를 실수로 쓰면 생기는 파일
+nul
