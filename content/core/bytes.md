@@ -1019,7 +1019,7 @@ bytearray(b'\xff\x00\x00\x00\x00\x00')
 
 1920x1080 RGB 프레임은 6,220,800바이트다. 30fps면 초당 186MB다. **이 경로에서 `.tobytes()` 를 한 번 더 부르면 초당 186MB를 추가로 복사한다.** 카메라 → 전처리 → 추론 → ROS 토픽으로 가는 파이프라인에서 단계마다 복사하면 CPU가 그것만 한다.
 
-그래서 OpenCV·PyTorch·ROS 2가 전부 이 프로토콜 위에서 논다. `torch.from_numpy(arr)` 가 왜 즉시 반환되는지, `cv_bridge` 가 왜 빠른지가 전부 같은 이유다. [11.2 PyTorch 텐서](#/torch-tensor), [13.12 센서 데이터 처리](#/sensors)에서 다시 만난다.
+그래서 NumPy·OpenCV·ROS 2가 전부 이 프로토콜 위에서 논다. `cv_bridge` 가 이미지 메시지를 NumPy 배열로 바꿀 때 복사 없이 즉시 끝나는 이유가 바로 이것이다. [10.12 센서 데이터 처리](#/sensors)에서 다시 만난다.
 :::
 
 ::: danger np.frombuffer 는 원본의 가변성을 물려받는다

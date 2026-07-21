@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "파이썬 완전 정복",
-    "subtitle": "기초부터 ROS·ML·DL·Vision·AI까지",
+    "subtitle": "기초부터 ROS 2까지",
     "pyversion": "3.14"
   },
   "parts": [
@@ -179,7 +179,7 @@
       "id": "numeric",
       "num": "Part IX",
       "title": "수치 계산과 데이터",
-      "desc": "ML·DL·비전의 공통 기반. NumPy를 제대로 알면 나머지가 쉬워진다.",
+      "desc": "NumPy를 제대로 알면 데이터를 다루는 모든 일이 쉬워진다.",
       "chapters": [
         { "num": "9.1", "id": "numpy-basics", "title": "NumPy: ndarray의 모든 것", "desc": "dtype, shape, 인덱싱, 뷰 vs 복사" },
         { "num": "9.2", "id": "broadcasting", "title": "브로드캐스팅과 벡터화", "desc": "반복문을 지우는 사고법" },
@@ -193,119 +193,27 @@
       ]
     },
     {
-      "id": "ml",
-      "num": "Part X",
-      "title": "머신러닝",
-      "desc": "scikit-learn을 축으로 한 고전 ML. 딥러닝 이전에 반드시 갖춰야 할 감각.",
-      "chapters": [
-        { "num": "10.1", "id": "ml-workflow", "title": "ML 문제 정의와 워크플로", "desc": "무엇을 예측할 것인가부터" },
-        { "num": "10.2", "id": "preprocessing", "title": "데이터 전처리와 파이프라인", "desc": "누수 없는 전처리, ColumnTransformer" },
-        { "num": "10.3", "id": "linear-models", "title": "선형 모델", "desc": "회귀, 로지스틱, 규제, 해석" },
-        { "num": "10.4", "id": "trees", "title": "트리 기반 모델과 부스팅", "desc": "랜덤 포레스트, XGBoost, LightGBM, CatBoost" },
-        { "num": "10.5", "id": "classic-models", "title": "SVM, kNN, 나이브 베이즈", "desc": "커널 트릭, 거리 기반 사고" },
-        { "num": "10.6", "id": "unsupervised", "title": "비지도 학습", "desc": "K-means, DBSCAN, PCA, t-SNE, UMAP" },
-        { "num": "10.7", "id": "evaluation", "title": "모델 평가와 검증", "desc": "교차검증, 지표 선택, 불균형 데이터" },
-        { "num": "10.8", "id": "hpo", "title": "하이퍼파라미터 최적화", "desc": "그리드/랜덤/베이지안, Optuna" },
-        { "num": "10.9", "id": "feature-eng", "title": "특징 공학", "desc": "도메인 지식을 숫자로" },
-        { "num": "10.10", "id": "mlops-basics", "title": "실험 관리와 재현성", "desc": "시드, 버전 관리, MLflow" }
-      ]
-    },
-    {
-      "id": "dl",
-      "num": "Part XI",
-      "title": "딥러닝",
-      "desc": "PyTorch로 밑바닥부터. 남의 코드를 복붙하는 게 아니라 직접 설계하고 디버깅하는 수준까지.",
-      "chapters": [
-        { "num": "11.1", "id": "nn-math", "title": "신경망의 수학적 기초", "desc": "역전파를 NumPy로 직접 구현" },
-        { "num": "11.2", "id": "torch-tensor", "title": "PyTorch 텐서", "desc": "디바이스, dtype, 뷰, 인플레이스" },
-        { "num": "11.3", "id": "autograd", "title": "autograd", "desc": "계산 그래프, 그래디언트 흐름 디버깅" },
-        { "num": "11.4", "id": "nn-module", "title": "nn.Module과 모델 설계", "desc": "파라미터, 버퍼, 초기화, 훅" },
-        { "num": "11.5", "id": "dataloader", "title": "데이터 로딩 파이프라인", "desc": "Dataset, DataLoader, 증강, 병목 해소" },
-        { "num": "11.6", "id": "training-loop", "title": "학습 루프와 최적화", "desc": "옵티마이저, 스케줄러, AMP, 그래디언트 클리핑" },
-        { "num": "11.7", "id": "regularization", "title": "정규화와 일반화", "desc": "BatchNorm/LayerNorm, 드롭아웃, 과적합 진단" },
-        { "num": "11.8", "id": "cnn", "title": "CNN", "desc": "합성곱 연산, ResNet, 수용 영역" },
-        { "num": "11.9", "id": "rnn", "title": "RNN, LSTM, 시퀀스 모델링", "desc": "시간 축 처리, 패딩과 마스킹" },
-        { "num": "11.10", "id": "transformer", "title": "어텐션과 트랜스포머", "desc": "밑바닥부터 구현하기" },
-        { "num": "11.11", "id": "transfer", "title": "전이 학습과 파인튜닝", "desc": "프리즈, 레이어별 학습률, 도메인 적응" },
-        { "num": "11.12", "id": "generative", "title": "생성 모델", "desc": "AE, VAE, GAN, Diffusion" },
-        { "num": "11.13", "id": "distributed", "title": "분산 학습", "desc": "DDP, FSDP, 멀티 GPU 실전" },
-        { "num": "11.14", "id": "inference", "title": "추론 최적화와 배포", "desc": "TorchScript, ONNX, TensorRT, 양자화" }
-      ]
-    },
-    {
-      "id": "vision",
-      "num": "Part XII",
-      "title": "컴퓨터 비전",
-      "desc": "고전 영상처리와 딥러닝 비전을 모두. 로봇에 눈을 달기 위한 전제.",
-      "chapters": [
-        { "num": "12.1", "id": "image-basics", "title": "디지털 이미지의 표현", "desc": "색공간, 비트 깊이, 좌표계 혼란 정리" },
-        { "num": "12.2", "id": "opencv", "title": "OpenCV 입문", "desc": "입출력, 기본 연산, NumPy와의 관계" },
-        { "num": "12.3", "id": "filtering", "title": "필터링과 엣지 검출", "desc": "컨볼루션, 가우시안, Canny, 모폴로지" },
-        { "num": "12.4", "id": "features", "title": "특징점과 매칭", "desc": "Harris, SIFT, ORB, RANSAC" },
-        { "num": "12.5", "id": "geometry-transform", "title": "기하 변환과 호모그래피", "desc": "어파인, 원근, 파노라마 스티칭" },
-        { "num": "12.6", "id": "calibration", "title": "카메라 모델과 캘리브레이션", "desc": "핀홀 모델, 왜곡 보정, 내부/외부 파라미터" },
-        { "num": "12.7", "id": "stereo", "title": "스테레오와 깊이", "desc": "에피폴라 기하, 시차, 깊이 카메라" },
-        { "num": "12.8", "id": "classification", "title": "이미지 분류 딥러닝", "desc": "전이학습 실전, 데이터 증강" },
-        { "num": "12.9", "id": "detection", "title": "객체 검출", "desc": "YOLO 계열, 앵커, NMS, mAP" },
-        { "num": "12.10", "id": "segmentation", "title": "세그멘테이션", "desc": "U-Net, Mask R-CNN, SAM" },
-        { "num": "12.11", "id": "tracking", "title": "객체 추적", "desc": "칼만 필터, SORT/DeepSORT, 옵티컬 플로우" },
-        { "num": "12.12", "id": "pointcloud", "title": "3D 비전과 포인트 클라우드", "desc": "Open3D, ICP, 평면 검출, LiDAR" },
-        { "num": "12.13", "id": "vit", "title": "비전 트랜스포머와 파운데이션 모델", "desc": "ViT, CLIP, DINO, 제로샷" }
-      ]
-    },
-    {
       "id": "ros",
-      "num": "Part XIII",
+      "num": "Part X",
       "title": "ROS 2",
-      "desc": "로봇 소프트웨어의 표준. rclpy로 노드부터 자율주행·매니퓰레이션까지.",
+      "desc": "로봇 소프트웨어의 표준. rclpy로 노드부터 자율주행·매니퓰레이션까지. 이 책의 마지막 파트.",
       "chapters": [
-        { "num": "13.1", "id": "ros-intro", "title": "ROS 2 개요와 설치", "desc": "ROS 1과의 차이, 배포판 선택" },
-        { "num": "13.2", "id": "ros-workspace", "title": "워크스페이스, 패키지, colcon", "desc": "빌드 시스템과 오버레이" },
-        { "num": "13.3", "id": "rclpy-node", "title": "rclpy 노드", "desc": "실행 모델, 스핀, 콜백 그룹" },
-        { "num": "13.4", "id": "topics", "title": "토픽", "desc": "발행/구독, 메시지 정의, 성능" },
-        { "num": "13.5", "id": "services", "title": "서비스", "desc": "요청/응답, 비동기 호출의 함정" },
-        { "num": "13.6", "id": "actions", "title": "액션", "desc": "장시간 작업, 피드백, 취소" },
-        { "num": "13.7", "id": "params-launch", "title": "파라미터와 launch", "desc": "설정 관리, 파이썬 launch 파일" },
-        { "num": "13.8", "id": "qos", "title": "QoS와 DDS", "desc": "신뢰성, 내구성, 통신이 안 되는 이유" },
-        { "num": "13.9", "id": "tf2", "title": "TF2 좌표 변환", "desc": "프레임 트리, 시간 동기화, 흔한 오류" },
-        { "num": "13.10", "id": "urdf", "title": "URDF와 로봇 모델", "desc": "링크, 조인트, xacro, 시각화" },
-        { "num": "13.11", "id": "gazebo", "title": "Gazebo 시뮬레이션", "desc": "물리 엔진, 센서 플러그인, 월드" },
-        { "num": "13.12", "id": "sensors", "title": "센서 데이터 처리", "desc": "카메라, LiDAR, IMU, 동기화" },
-        { "num": "13.13", "id": "nav2", "title": "Nav2 자율주행", "desc": "SLAM, 코스트맵, 플래너, 컨트롤러" },
-        { "num": "13.14", "id": "moveit", "title": "MoveIt 2 매니퓰레이션", "desc": "역기구학, 모션 플래닝, 파지" },
-        { "num": "13.15", "id": "ros-debug", "title": "rosbag, 디버깅, 성능", "desc": "기록/재생, 실시간성, 프로파일링" },
-        { "num": "13.16", "id": "ros-dl", "title": "ROS 2 + 딥러닝 통합", "desc": "추론 노드 설계, 지연 관리" }
-      ]
-    },
-    {
-      "id": "ai",
-      "num": "Part XIV",
-      "title": "AI 응용",
-      "desc": "LLM 시대의 실전. 원리를 알고 쓰는 것과 API만 호출하는 것의 차이.",
-      "chapters": [
-        { "num": "14.1", "id": "llm-basics", "title": "LLM 동작 원리", "desc": "토크나이저, 샘플링, KV 캐시, 컨텍스트" },
-        { "num": "14.2", "id": "hf-transformers", "title": "transformers 라이브러리", "desc": "모델 로딩, 파이프라인, 생성 제어" },
-        { "num": "14.3", "id": "prompting", "title": "프롬프트와 구조화 출력", "desc": "설계 원칙, JSON 스키마, 함수 호출" },
-        { "num": "14.4", "id": "embeddings", "title": "임베딩과 벡터 검색", "desc": "의미 유사도, FAISS, 하이브리드 검색" },
-        { "num": "14.5", "id": "rag", "title": "RAG 설계", "desc": "청킹, 리랭킹, 평가, 실패 모드" },
-        { "num": "14.6", "id": "agents", "title": "에이전트와 도구 사용", "desc": "루프 설계, 도구 정의, MCP" },
-        { "num": "14.7", "id": "finetuning", "title": "파인튜닝: LoRA/QLoRA", "desc": "데이터셋 구성, PEFT, 평가" },
-        { "num": "14.8", "id": "multimodal", "title": "멀티모달", "desc": "VLM, 이미지 이해, 로봇 적용" },
-        { "num": "14.9", "id": "serving", "title": "서빙과 최적화", "desc": "vLLM, 양자화, 배치, 스트리밍" },
-        { "num": "14.10", "id": "llm-eval", "title": "평가와 안전성", "desc": "벤치마크, LLM-as-judge, 한계 인식" }
-      ]
-    },
-    {
-      "id": "capstone",
-      "num": "Part XV",
-      "title": "통합 프로젝트",
-      "desc": "배운 것을 하나로. 설계부터 동작하는 시스템까지.",
-      "chapters": [
-        { "num": "15.1", "id": "project-design", "title": "프로젝트 설계 방법론", "desc": "요구사항에서 아키텍처로" },
-        { "num": "15.2", "id": "cap-vision", "title": "캡스톤 I: 실시간 비전 파이프라인", "desc": "검출 + 추적 + 계측" },
-        { "num": "15.3", "id": "cap-ros", "title": "캡스톤 II: ROS 2 자율 주행 로봇", "desc": "인지-판단-제어 통합" },
-        { "num": "15.4", "id": "cap-vla", "title": "캡스톤 III: 비전-언어 로봇 에이전트", "desc": "자연어 명령으로 움직이는 로봇" },
-        { "num": "15.5", "id": "next-steps", "title": "다음 단계", "desc": "여기서 어디로 갈 것인가" }
+        { "num": "10.1", "id": "ros-intro", "title": "ROS 2 개요와 설치", "desc": "ROS 1과의 차이, 배포판 선택" },
+        { "num": "10.2", "id": "ros-workspace", "title": "워크스페이스, 패키지, colcon", "desc": "빌드 시스템과 오버레이" },
+        { "num": "10.3", "id": "rclpy-node", "title": "rclpy 노드", "desc": "실행 모델, 스핀, 콜백 그룹" },
+        { "num": "10.4", "id": "topics", "title": "토픽", "desc": "발행/구독, 메시지 정의, 성능" },
+        { "num": "10.5", "id": "services", "title": "서비스", "desc": "요청/응답, 비동기 호출의 함정" },
+        { "num": "10.6", "id": "actions", "title": "액션", "desc": "장시간 작업, 피드백, 취소" },
+        { "num": "10.7", "id": "params-launch", "title": "파라미터와 launch", "desc": "설정 관리, 파이썬 launch 파일" },
+        { "num": "10.8", "id": "qos", "title": "QoS와 DDS", "desc": "신뢰성, 내구성, 통신이 안 되는 이유" },
+        { "num": "10.9", "id": "tf2", "title": "TF2 좌표 변환", "desc": "프레임 트리, 시간 동기화, 흔한 오류" },
+        { "num": "10.10", "id": "urdf", "title": "URDF와 로봇 모델", "desc": "링크, 조인트, xacro, 시각화" },
+        { "num": "10.11", "id": "gazebo", "title": "Gazebo 시뮬레이션", "desc": "물리 엔진, 센서 플러그인, 월드" },
+        { "num": "10.12", "id": "sensors", "title": "센서 데이터 처리", "desc": "카메라, LiDAR, IMU, 동기화" },
+        { "num": "10.13", "id": "nav2", "title": "Nav2 자율주행", "desc": "SLAM, 코스트맵, 플래너, 컨트롤러" },
+        { "num": "10.14", "id": "moveit", "title": "MoveIt 2 매니퓰레이션", "desc": "역기구학, 모션 플래닝, 파지" },
+        { "num": "10.15", "id": "ros-debug", "title": "rosbag, 디버깅, 성능", "desc": "기록/재생, 실시간성, 프로파일링" },
+        { "num": "10.16", "id": "ros-next", "title": "다음 단계: C++(rclcpp)로", "desc": "언제 C++로 넘어가야 하는가, rclpy와 rclcpp의 차이, 마이그레이션 전략" }
       ]
     }
   ]

@@ -968,7 +968,7 @@ True
 
 쓰이는 곳은 생각보다 많다. **클래스 자체**가 그렇고(`C()` = `type.__call__(C)`), 인자 받는 **데코레이터**를 클래스로 짤 때 `__call__` 이 감싸기를 맡고([1.11 데코레이터](#/decorators)), `functools.partial` 과 `operator.itemgetter` 도 전부 이것이다.
 
-가장 중요한 예는 PyTorch다. `model(x)` 는 `Module.__call__` 이고, 그게 **훅을 실행한 뒤** `forward(x)` 를 부른다. `model.forward(x)` 를 직접 부르면 훅이 안 돈다 — 그래서 절대 그렇게 쓰지 않는다. ([11.4 nn.Module](#/nn-module))
+널리 알려진 예로 PyTorch가 있다. `model(x)` 는 `Module.__call__` 이고, 그게 **훅을 실행한 뒤** `forward(x)` 를 부른다. `model.forward(x)` 를 직접 부르면 훅이 안 돈다 — 그래서 절대 그렇게 쓰지 않는다. 프레임워크가 "메서드 하나만 오버라이드하면 나머지는 알아서 돌아간다"는 마법을 부릴 때는, 거의 항상 이 패턴이 뒤에 숨어 있다.
 
 ## 요약
 
