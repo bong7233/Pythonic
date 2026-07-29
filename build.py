@@ -56,7 +56,7 @@ def stamp_versions() -> str:
             rf"\1?v={ver}",
             html,
         )
-    INDEX.write_text(html, encoding="utf-8")
+    INDEX.write_text(html, encoding="utf-8", newline="\n")
     return ver
 
 
@@ -118,13 +118,15 @@ def build() -> dict:
     }
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
+    # newline="\n": 윈도우에서 기본값은 \n 을 \r\n 으로 바꾼다. 그러면 같은 내용인데도
+    # 디스크 바이트가 달라져 stamp_versions() 의 해시가 OS마다 달라진다.
     js = (
         "/* 자동 생성 파일 — 직접 고치지 말 것. `python build.py` 로 다시 만든다. */\n"
         "window.BOOK = "
         + json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
         + ";\n"
     )
-    OUT.write_text(js, encoding="utf-8")
+    OUT.write_text(js, encoding="utf-8", newline="\n")
     ver = stamp_versions()
 
     return {
