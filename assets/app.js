@@ -143,7 +143,7 @@
 
     if (!r.id || !BY_ID[r.id]) {
       renderHome();
-      document.title = '파이썬 완전 정복 — 기초부터 ROS 2까지';
+      document.title = '파이썬 완전 정복 — 기초부터 코딩테스트·실무·ROS 2까지';
       highlightToc(null);
       scrollToTop();
       return;
@@ -181,7 +181,7 @@
       '<div class="home-hero">' +
       '<div class="home-kicker">Python ' + (BOOK.meta && BOOK.meta.pyversion || '3.14') + ' 기준 · 나만의 가이드북</div>' +
       '<h1 class="home-title">파이썬 완전 정복</h1>' +
-      '<p class="home-sub">언어의 밑바닥부터 자료구조·알고리즘, 그리고 ROS 2로 로봇을 움직이는 데까지. ' +
+      '<p class="home-sub">언어의 밑바닥부터 자료구조·알고리즘, 코딩테스트 실전, 그리고 ROS 2로 로봇을 움직이는 데까지. ' +
       '코딩테스트를 통과하고 실제 로봇 시스템을 만드는 데 필요한 것만, 대신 끝까지.</p>' +
       '<div class="home-stats">' +
       stat(BOOK.toc.length, '부(Part)') +
