@@ -37,6 +37,8 @@
     LS.set('done', done);
     renderProgress();
     syncTocDone();
+    // 게임 레이어가 있으면 완료를 축하한다. 없어도 여기까지는 그대로 돈다.
+    if (v && window.PyGame) window.PyGame.celebrate(id);
   }
   function doneCount() { return CHAPTERS.filter(function (c) { return isDone(c.id); }).length; }
 
@@ -48,6 +50,7 @@
     if (fg) fg.style.strokeDashoffset = String(100 - pct);
     $('#ps-pct').textContent = pct + '%';
     $('#ps-sub').textContent = n + ' / ' + CHAPTERS.length + ' 절 완료';
+    if (window.PyGame) window.PyGame.sync();
   }
 
   function syncTocDone() {
@@ -146,9 +149,12 @@
       document.title = '파이썬 완전 정복 — 기초부터 코딩테스트·실무·ROS 2까지';
       highlightToc(null);
       scrollToTop();
+      // 표지를 그린 뒤라야 풍경 요소가 존재한다. 그 전에 부르면 성장 단계가 안 붙는다.
+      if (window.PyGame) window.PyGame.sync();
       return;
     }
     renderChapter(BY_ID[r.id], r.anchor);
+    if (window.PyGame) window.PyGame.sync();
   }
 
   function renderHome() {
@@ -185,12 +191,13 @@
       '코딩테스트를 통과하고 실제 로봇 시스템을 만드는 데 필요한 것만, 대신 끝까지.</p>' +
       // 장식용 픽셀 풍경. 내용이 없으므로 스크린리더에서는 숨긴다.
       '<div class="home-scene" aria-hidden="true">' +
-      '<i class="spr hs-tree-a"></i><i class="spr hs-tree-b"></i><i class="spr hs-bush"></i>' +
+      '<i class="spr hs-sapling"></i><i class="spr hs-tree-a"></i><i class="spr hs-tree-b"></i><i class="spr hs-bush"></i>' +
       '<i class="spr hs-flower"></i><i class="spr hs-mushroom"></i><i class="spr hs-rock"></i>' +
       '<i class="spr hs-grass"></i>' +
       '<i class="spr hs-crystal"></i><i class="spr hs-slime"></i><i class="spr hs-bat"></i>' +
       '<i class="spr hs-robot"></i>' +
       '</div>' +
+      (window.PyGame ? window.PyGame.homeHtml() : '') +
       '<div class="home-stats">' +
       stat(BOOK.toc.length, '부(Part)') +
       stat(CHAPTERS.length, '절(Chapter)') +

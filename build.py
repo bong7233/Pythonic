@@ -33,7 +33,7 @@ INDEX = ROOT / "index.html"
 
 # index.html 안에서 버전 도장을 찍을 자산들
 ASSETS = ["assets/style.css", "assets/highlight.js", "assets/markdown.js",
-          "assets/bundle.js", "assets/app.js"]
+          "assets/bundle.js", "assets/game.js", "assets/app.js"]
 
 
 def stamp_versions() -> str:

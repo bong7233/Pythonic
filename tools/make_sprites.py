@@ -191,6 +191,69 @@ CRYSTAL = svg(10, 14, [
 ])
 
 
+def ghost(step: int) -> str:
+    """유령. 0/1 로 아랫자락이 흔들린다."""
+    g = "#dfe7ef"
+    gs = "#9fb0c2"
+    body = [
+        (4, 0, 6, 1, OUT_D),
+        (2, 1, 10, 1, OUT_D), (2, 2, 10, 7, g), (3, 2, 3, 2, "#ffffff"),
+        (1, 3, 1, 6, OUT_D), (12, 3, 1, 6, OUT_D),
+        (4, 4, 2, 2, OUT_D), (8, 4, 2, 2, OUT_D),   # 눈
+        (6, 7, 2, 1, gs),                            # 입
+    ]
+    if step == 0:
+        tail = [(2, 9, 2, 2, g), (5, 9, 2, 3, g), (8, 9, 2, 2, g), (10, 9, 2, 3, g)]
+    else:
+        tail = [(2, 9, 2, 3, g), (5, 9, 2, 2, g), (8, 9, 2, 3, g), (10, 9, 2, 2, g)]
+    return svg(14, 12, body + tail)
+
+
+def bird(step: int) -> str:
+    """작은 새. 0=날개 위, 1=날개 아래."""
+    b = "#f2b23e"
+    bs = "#c9871f"
+    body = [
+        (5, 3, 6, 1, OUT_D), (4, 4, 8, 4, b), (4, 4, 8, 1, OUT_D),
+        (5, 8, 6, 1, OUT_D),
+        (6, 5, 1, 1, OUT_D),                         # 눈
+        (2, 5, 2, 1, bs), (1, 5, 1, 1, OUT_D),       # 부리
+        (11, 4, 3, 1, bs), (12, 5, 2, 1, bs),        # 꼬리
+    ]
+    w = [(6, 2, 4, 2, bs)] if step == 0 else [(6, 7, 4, 2, bs)]
+    return svg(15, 11, body + w)
+
+
+def golem(step: int) -> str:
+    """바위 골렘. 0/1 로 몸이 한 칸 들썩인다."""
+    dy = 0 if step == 0 else 1
+    return svg(14, 14, [
+        (3, 1 + dy, 8, 1, OUT_R),
+        (2, 2 + dy, 10, 6, ROCK), (2, 2 + dy, 10, 1, OUT_R),
+        (3, 3 + dy, 3, 1, ROCK_H),
+        (3, 4 + dy, 2, 2, CRY), (9, 4 + dy, 2, 2, CRY),   # 수정 눈
+        (2, 8 + dy, 10, 1, OUT_R),
+        (1, 9, 4, 4, ROCK), (1, 9, 4, 1, OUT_R),          # 팔·다리는 고정
+        (9, 9, 4, 4, ROCK), (9, 9, 4, 1, OUT_R),
+        (1, 13, 12, 1, OUT_R),
+    ])
+
+
+SAPLING = svg(10, 12, [
+    (4, 3, 2, 1, OUT_G),
+    (3, 4, 4, 3, LEAF), (4, 4, 1, 1, LEAF_H),
+    (3, 7, 4, 1, OUT_G),
+    (4, 8, 2, 3, TRUNK),
+    (3, 11, 4, 1, OUT_G),
+])
+
+# 완료 이펙트용 별.
+STAR = svg(8, 8, [
+    (3, 0, 2, 8, AMBER), (0, 3, 8, 2, AMBER),
+    (2, 2, 4, 4, AMBER), (3, 3, 2, 2, "#fff3d0"),
+])
+
+
 def fire(step: int) -> str:
     """모닥불. 0/1 로 불꽃이 흔들린다."""
     logs = [
@@ -220,6 +283,10 @@ SPRITES = {
     "--spr-tree": TREE, "--spr-bush": BUSH, "--spr-grass": GRASS,
     "--spr-flower": FLOWER, "--spr-rock": ROCK_S, "--spr-crystal": CRYSTAL,
     "--spr-mushroom": MUSHROOM,
+    "--spr-ghost-0": ghost(0), "--spr-ghost-1": ghost(1),
+    "--spr-bird-0": bird(0), "--spr-bird-1": bird(1),
+    "--spr-golem-0": golem(0), "--spr-golem-1": golem(1),
+    "--spr-sapling": SAPLING, "--spr-star": STAR,
 }
 
 # ---------------------------------------------------------------- CSS
