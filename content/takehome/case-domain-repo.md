@@ -84,7 +84,7 @@ def test_같은_책은_두_번_못_빌린다(tmp_path, monkeypatch):
 1. **규칙을 읽으려면 파일 포맷을 읽어야 한다.** "3권 제한"이라는 규칙은 `len(mine) >= MAX_ACTIVE` 한 줄인데, 그 `mine` 에 도달하기까지 `json.loads`, `r["returned_on"] is None`, `date.fromisoformat(r["due_on"])` 을 통과해야 한다. **규칙과 직렬화가 같은 함수에 섞여 있다.**
 2. **모든 규칙 테스트가 파일을 만든다.** 위 테스트는 `tmp_path` 와 `monkeypatch` 를 쓴다. 규칙이 스무 개면 스무 번 디스크를 친다. 그리고 `monkeypatch.setattr` 로 **모듈 전역을 바꾸는** 테스트는 [12.4](#/boundaries-di)에서 본 그 함정 위에 서 있다.
 3. **저장 방식을 바꾸면 규칙을 다시 읽어야 한다.** JSON을 SQLite로 바꾸는 순간 `borrow` 본문 전체를 다시 쓴다. 규칙은 하나도 안 바뀌었는데.
-4. **`dict` 는 오타를 안 잡는다.** `r["returnd_on"]` 이라고 쓰면 `KeyError` 지만, `r.get("returnd_on")` 으로 바꾼 순간 조용히 `None` 이 되어 모든 대출이 반납된 것으로 처리된다.
+4. **`dict` 는 오타를 안 잡는다.** `r["returnd_on"]` 이라고 쓰면 `KeyError` 지만, `r.get("returnd_on")` 으로 바꾼 순간 조용히 `None` 이 되어 **이미 반납된 대출까지 전부 대출 중으로 처리된다.** `returned_on` 을 읽는 곳은 `active` 를 거르는 한 줄뿐이고, 거기서 늘 `None` 이 나오면 `is None` 조건이 항상 참이 되기 때문이다. 반납한 책을 아무도 다시 빌릴 수 없게 되는데, 예외도 안 나고 테스트도 그냥 통과한다. 증상은 **"이미 대출됨" 거절**로 나타나고, 원인은 오타 한 글자다.
 
 ::: warn "함수 하나짜리인데 클래스가 필요한가"
 필요 없다. [12.2](#/requirements-to-model)에서 다뤘듯 상태 없는 계산은 함수로 충분하다. 지금 문제는 클래스냐 함수냐가 아니라 **한 함수가 두 가지 일을 하고 있다**는 것이다. 아래에서 하는 일은 클래스를 도입하는 것이 아니라 `json` 을 다른 파일로 밀어내는 것이다. 클래스는 그 결과로 생긴다.
@@ -382,7 +382,6 @@ class JsonFileLoanRepo:
 
 ```python title="library/main.py"
 """조립하는 유일한 곳. 진짜 저장소가 여기서만 도메인과 만난다."""
-from datetime import date
 from pathlib import Path
 
 from .repos import JsonFileLoanRepo
@@ -396,6 +395,15 @@ def build(db: Path) -> LoanService:
 저장소만 갈아 끼우고 같은 시나리오를 두 번 돌려 본다.
 
 ```python title="demo.py"
+import tempfile
+from datetime import date
+from pathlib import Path
+
+from library.errors import LoanError
+from library.repos import InMemoryLoanRepo, JsonFileLoanRepo
+from library.service import LoanService
+
+
 def scenario(repo, label):
     svc = LoanService(repo)
     print(f"[{label}]")
@@ -483,7 +491,7 @@ True
 인메모리 저장소의 `all()` 은 **저장한 그 객체 자체**를 돌려준다([1.1](#/objects-names)). 그러니 꺼내서 고치면 저장소 안의 것도 같이 고쳐진다. 파일 저장소는 매번 새로 만들어 돌려주므로 `is` 는 `False`, `==` 는 `True` 다. **같은 값, 다른 객체.** 이 차이 위에 버그가 앉는다.
 
 ::: danger 저장소를 바꾸는 순간 터지는 버그, 인메모리로는 못 잡는다
-이 테스트를 두 저장소에 대해 한 번씩 돌렸다. 아래 출력은 그 시점의 저장소 테스트 파일 전체(테스트 4개 × 구현 2개 = 8케이스)를 돌린 결과다.
+이 테스트를 두 저장소에 대해 한 번씩 돌렸다. 아래 출력은 그 시점의 저장소 테스트 파일 전체(테스트 4개 × 구현 2개 = 8케이스)를 돌린 결과다. 이 시점의 `tests/test_repos.py` 에는 `test_빈_저장소는_빈_목록을_돌려준다`, `test_저장한_것을_그대로_돌려준다`, `test_같은_id_로_저장하면_덮어쓴다`, 그리고 아래의 `test_반납하면_다른_사람이_빌릴_수_있다` 네 개가 있었다 — 지금은 `frozen=True` 를 뗀 상태라 뒤에서 추가할 불변성 테스트가 아직 없다.
 
 ```python
 def test_반납하면_다른_사람이_빌릴_수_있다(repo):
@@ -618,6 +626,88 @@ tests/test_repos.py::test_서비스가_어느_저장소에서든_같게_동작�
 규칙 테스트를 파일 저장소로 돌리지 마라. 느려지기만 하고 검증하는 것은 같다. 반대로 저장소 계약 테스트를 인메모리로만 돌리면 위의 함정에 그대로 걸린다. **무엇을 테스트하는지가 어떤 저장소를 쓸지를 정한다.**
 :::
 
+규칙 쪽은 이렇게 생겼다. 요구사항 1~4번이 아홉 개의 테스트 이름으로 흩어져 있다.
+
+```python title="tests/test_rules.py"
+"""대출 규칙. 저장 방식과 무관하므로 인메모리 하나로 돌린다."""
+from datetime import date
+
+import pytest
+
+from library.errors import BookAlreadyLoaned, HasOverdueLoan, NotLoaned, TooManyLoans
+from library.repos import InMemoryLoanRepo
+from library.service import LoanService
+
+DAY1 = date(2025, 3, 2)
+
+
+def svc() -> LoanService:
+    return LoanService(InMemoryLoanRepo())
+
+
+def test_대출_기한은_14일_뒤다():
+    loan = svc().borrow("M-01", "B-100", DAY1)
+    assert loan.due_on == date(2025, 3, 16)
+    assert loan.is_active
+
+
+def test_한_회원은_세_권까지_빌린다():
+    s = svc()
+    s.borrow("M-01", "B-100", DAY1)
+    s.borrow("M-01", "B-101", DAY1)
+    assert s.borrow("M-01", "B-102", DAY1).loan_id == "L0003"
+
+
+def test_네_번째_대출은_한도_초과다():
+    s = svc()
+    for i in range(3):
+        s.borrow("M-01", f"B-10{i}", DAY1)
+    with pytest.raises(TooManyLoans):
+        s.borrow("M-01", "B-999", DAY1)
+
+
+def test_한도는_회원마다_따로_센다():
+    s = svc()
+    for i in range(3):
+        s.borrow("M-01", f"B-10{i}", DAY1)
+    assert s.borrow("M-02", "B-200", DAY1).member_id == "M-02"
+
+
+def test_빌린_책은_다른_사람이_못_빌린다():
+    s = svc()
+    s.borrow("M-01", "B-100", DAY1)
+    with pytest.raises(BookAlreadyLoaned):
+        s.borrow("M-02", "B-100", DAY1)
+
+
+def test_기한_안에_반납하면_연체료가_없다():
+    s = svc()
+    s.borrow("M-01", "B-100", DAY1)
+    assert s.give_back("B-100", date(2025, 3, 16)) == 0
+
+
+def test_하루_늦으면_100원이다():
+    s = svc()
+    s.borrow("M-01", "B-100", DAY1)
+    assert s.give_back("B-100", date(2025, 3, 17)) == 100
+
+
+def test_연체_중인_회원은_새로_못_빌린다():
+    s = svc()
+    s.borrow("M-01", "B-100", DAY1)
+    with pytest.raises(HasOverdueLoan):
+        s.borrow("M-01", "B-200", date(2025, 3, 17))
+
+
+def test_대출_중이_아닌_책은_반납할_수_없다():
+    with pytest.raises(NotLoaned):
+        svc().give_back("B-100", DAY1)
+```
+
+`fixture` 하나 없이 `svc()` 헬퍼 한 줄로 끝났다. 저장소를 인자로 받는 설계였기 때문에 **`tmp_path` 도 `monkeypatch` 도 필요 없다.** 1차 시도의 `test_v0.py` 와 나란히 놓아 봐라. 거기 있던 그 두 이름이 통째로 사라졌고, 아홉 개 테스트가 디스크를 한 번도 치지 않는다. 이것이 분리가 주는 첫 번째 배당금이다.
+
+세 가지가 눈에 띄어야 한다. 첫째, `test_한_회원은_세_권까지_빌린다` 와 `test_네_번째_대출은_한도_초과다` 는 **경계의 양쪽**을 따로 짚는다 — 하나만 있으면 `>` 와 `>=` 를 바꿔 써도 안 걸린다([12.6](#/test-strategy)). 둘째, `test_한도는_회원마다_따로_센다` 는 요구사항 문장에 안 적혀 있지만 "한 회원이" 라는 한정어가 시킨 테스트다. 셋째, `test_기한_안에_반납하면_연체료가_없다` 의 `date(2025, 3, 16)` 은 기한 당일이다. **기한 당일은 연체가 아니다** — 이 판단이 코드 어딘가에 있어야 하고, 지금은 `models.py` 의 `max(0, ...)` 에 있다.
+
 전체를 돌리면 이렇다.
 
 ```bash
@@ -633,9 +723,9 @@ uv run --python 3.14 --with pytest pytest -q
 `JsonFileLoanRepo.all` 의 이름을 실수로 `find_all` 로 바꿔도 파이썬은 아무 말이 없다. 조립 지점(`main.py`)에서 mypy 를 돌려야 잡힌다.
 
 ```text nolines
-library/main.py:10: error: Argument 1 to "LoanService" has incompatible type "JsonFileLoanRepo"; expected "LoanRepository"  [arg-type]
-library/main.py:10: note: "JsonFileLoanRepo" is missing following "LoanRepository" protocol member:
-library/main.py:10: note:     all
+library/main.py:9: error: Argument 1 to "LoanService" has incompatible type "JsonFileLoanRepo"; expected "LoanRepository"  [arg-type]
+library/main.py:9: note: "JsonFileLoanRepo" is missing following "LoanRepository" protocol member:
+library/main.py:9: note:     all
 Found 1 error in 1 file (checked 7 source files)
 ```
 
@@ -742,24 +832,27 @@ def repo(request, tmp_path):
 ::: perf 느린 것은 디스크가 아니다
 | 구간 | 시간 |
 | --- | --- |
-| `save()` 1회 | 12.3 ~ 60.7 ms |
-| ├ `_read()` | 2.91 ~ 4.93 ms |
-| │ └ `json.loads` | 1.28 ~ 1.42 ms |
-| ├ `_write()` | 9.70 ~ 19.3 ms |
-| │ ├ `_to_row` × 1000 | 7.90 ~ 9.49 ms |
-| │ ├ `json.dumps` | 1.10 ~ 1.49 ms |
-| │ └ `write` + `os.replace` | 0.20 ~ 0.53 ms |
+| `save()` 1회 | 9.32 ~ 12.0 ms |
+| ├ `_read()` | 1.85 ~ 3.11 ms |
+| │ └ `json.loads` | 0.62 ~ 0.88 ms |
+| ├ `_write()` | 7.41 ~ 8.92 ms |
+| │ ├ `_to_row` × 1000 | 6.38 ~ 7.46 ms |
+| │ ├ `json.dumps` | 0.62 ~ 0.76 ms |
+| │ └ `write` + `os.replace` | 0.08 ~ 0.15 ms |
 
 (Python 3.14.0rc2 / Linux 기준 실측. 절대값은 기기마다 다르지만 자릿수 차이는 어디서나 같다.)
 
-**실제 디스크 쓰기는 전체의 5%도 안 된다.** 시간의 대부분은 `_to_row` 안의 `dataclasses.asdict` 가 먹는다. `asdict` 는 필드를 재귀적으로 훑으면서 dataclass가 아닌 값에 `copy.deepcopy` 를 건다. 손으로 `dict` 를 짜면 이렇게 갈린다.
+분해표를 읽을 때는 **하위 항목의 합이 상위 항목 안에 들어오는지**를 먼저 확인해라. 여기서는 `_read()` 와 `_write()` 의 상한을 더해도 12.0 ms 라 `save()` 안에 정확히 들어온다. 안 맞으면 둘 중 하나다 — 빠뜨린 구간이 있거나, 한 번 튄 값을 범위로 적었거나.
+
+**실제 디스크 쓰기는 전체의 5%도 안 된다.** 시간의 대부분은 `_to_row` 안의 `dataclasses.asdict` 가 먹는다. `asdict` 는 필드를 재귀적으로 훑으면서 `str`·`int`·`None` 같은 원자 타입은 그대로 통과시키지만(`dataclasses._ATOMIC_TYPES` 에 든 것들이다), **그 목록에 없는 값에는 `copy.deepcopy` 를 건다.** `Loan` 의 `date` 필드 — `loaned_on`, `due_on`, 그리고 반납됐다면 `returned_on` — 이 정확히 여기 걸린다. 세 문자열 필드는 한 푼도 안 든다. 손으로 `dict` 를 짜면 이렇게 갈린다.
 
 | 1,000개 변환 | 시간 |
 | --- | --- |
-| `asdict(ln)` | 6.46 ~ 13.4 ms |
-| 필드를 직접 나열 | 0.92 ~ 1.85 ms |
+| `asdict(ln)` | 5.52 ~ 6.43 ms |
+| `asdict`, 같은 필드를 전부 `str` 로 | 1.50 ~ 1.96 ms |
+| 필드를 직접 나열 | 0.66 ~ 0.74 ms |
 
-**7배다.** 직렬화가 병목인 코드에서 `asdict` 는 첫 번째 용의자다([2.6](#/dataclasses)).
+**여덟 배가 넘는다.** 가운데 줄이 원인을 짚어 준다. 필드 구성이 똑같아도 `date` 두 개를 `str` 로 바꾸면 `deepcopy` 를 한 번도 안 타서 1/4 아래로 떨어진다. **비싼 것은 `asdict` 라는 함수가 아니라 그 안에서 `deepcopy` 를 타는 필드다.** 직렬화가 병목인 코드에서 `asdict` 는 첫 번째 용의자이고, 용의점은 언제나 "원자 타입이 아닌 필드가 몇 개인가"다([2.6](#/dataclasses)).
 :::
 
 ::: warn 그러니 지금 고치라는 말이 아니다
@@ -829,7 +922,7 @@ class CachedLoanRepo:
 ```text nolines
    loan-task/
    ├── README.md
-   ├── conftest.py           <- 빈 파일. pytest 가 루트를 sys.path 에 넣게 한다
+   ├── conftest.py           <- 주석 한 줄뿐. pytest 가 루트를 sys.path 에 넣게 한다
    ├── library/
    │   ├── __init__.py
    │   ├── models.py         <- Loan. 순수 데이터
@@ -842,6 +935,14 @@ class CachedLoanRepo:
        ├── test_rules.py     <- 규칙. 인메모리 하나로
        └── test_repos.py     <- 저장소 계약. 구현마다 반복
 ```
+
+트리에서 설명이 필요한 파일은 `conftest.py` 하나다. 내용은 이게 전부다.
+
+```python title="conftest.py — 파일 전체"
+# tests/ 에서 프로젝트 루트를 import 할 수 있게 한다. 지우면 pytest 가 깨진다.
+```
+
+[12.1](#/takehome-eval)이 이 문제의 기본 해법으로 권한 것은 `pyproject.toml` 의 `[tool.pytest.ini_options]` 에 `pythonpath = ["."]` 한 줄이고, [12.2](#/requirements-to-model)·[12.3](#/state-machine)·[12.7](#/project-structure)의 프로젝트는 전부 그쪽을 쓴다. 여기서 다른 안을 고른 이유는 하나다 — **이 과제에는 설정 파일이 아직 하나도 없다.** 줄 하나를 적자고 `pyproject.toml` 을 새로 만들면 평가자가 열어야 할 파일이 하나 늘어난다. 대신 12.1이 못 박은 조건은 그대로 지킨다. **빈 파일로 두지 않는다.** 빈 `conftest.py` 는 다음 사람이 "아무것도 안 하는 파일"로 읽고 지우게 되어 있고, 지우는 순간 `pytest` 가 `ModuleNotFoundError: No module named 'library'` 로 수집 단계에서 죽는다. 주석 한 줄이 그 사고를 막는다. 둘 중 어느 쪽이든 좋지만, **이유가 파일 안에 적혀 있지 않은 쪽은 틀린 쪽이다.**
 
 의존 방향은 한쪽으로만 흐른다.
 
@@ -856,7 +957,7 @@ class CachedLoanRepo:
 `repos.py` 는 `service.py` 를 모르고, `service.py` 는 `repos.py` 를 모른다. **둘은 `ports.py` 에서만 만난다.** 이 그림을 README에 그대로 넣어라 — 평가자가 5분 안에 구조를 이해하는 가장 싼 방법이다. 구조를 왜 이렇게 나누는지는 [12.7](#/project-structure), README에 무엇을 적는지는 [12.8](#/readme-submit)에 있다.
 
 ::: note 파일이 일곱 개면 많은 것 아닌가
-`library/` 일곱 파일이 197줄, `tests/` 두 파일이 117줄, 합쳐 314줄이다. 파일 수가 아니라 **파일당 책임 수**를 봐라. `models.py` 21줄, `ports.py` 14줄, `service.py` 51줄, `repos.py` 67줄. 각 파일을 열었을 때 "이 파일은 무엇을 하는가"에 한 문장으로 답할 수 있으면 충분하다.
+`library/` 일곱 파일이 183줄, `tests/` 두 파일이 121줄, 합쳐 304줄이다. 파일 수가 아니라 **파일당 책임 수**를 봐라. `models.py` 21줄, `ports.py` 14줄, `service.py` 51줄, `repos.py` 67줄. 각 파일을 열었을 때 "이 파일은 무엇을 하는가"에 한 문장으로 답할 수 있으면 충분하다. 가장 긴 `repos.py` 조차 클래스 둘과 변환 함수 둘이고, 그 넷이 전부 "저장"이라는 한 단어로 묶인다.
 
 반대로 이 규모의 과제에 `domain/`, `application/`, `infrastructure/` 세 겹 디렉터리를 파면 그건 다른 이야기다. **디렉터리는 파일이 열 개를 넘을 때 만든다.**
 :::
@@ -878,7 +979,7 @@ class CachedLoanRepo:
 `InMemoryLoanRepo.save` 를 `self._rows[loan.loan_id] = loan` 대신 `self._rows.setdefault(loan.loan_id, loan)` 으로 바꿔라. 다섯 개 테스트 중 몇 개가, 어느 파라미터에서 깨지는가? 깨진 테스트 이름이 **무엇이 위반됐는지를 문장으로 말해 주는지** 확인해라. 말해 주지 않는다면 테스트 이름을 고쳐라.
 
 **2. CSV 저장소를 추가해라.**
-`csv` 표준 라이브러리로 `CsvLoanRepo` 를 구현하고 계약 테스트 파라미터에 추가해서 **15개를 통과**시켜라. 도메인 파일 네 개(`models`/`errors`/`ports`/`service`)를 한 줄이라도 고쳤다면, 무엇 때문에 고쳐야 했는지 적어라 — 그것이 이 설계의 진짜 구멍이다.
+`csv` 표준 라이브러리로 `CsvLoanRepo` 를 구현하고 계약 테스트 파라미터에 추가해서 **`tests/test_repos.py` 의 15개(테스트 5개 × 구현 3개)를 통과**시켜라. `tests/test_rules.py` 아홉 개까지 합치면 스위트 전체가 `24 passed` 다. 도메인 파일 네 개(`models`/`errors`/`ports`/`service`)를 한 줄이라도 고쳤다면, 무엇 때문에 고쳐야 했는지 적어라 — 그것이 이 설계의 진짜 구멍이다.
 
 **3. 삭제 요구사항을 받아라.**
 "회원 탈퇴 시 그 회원의 대출 기록을 지운다"가 추가됐다. `LoanRepository` 에 `delete(loan_id)` 를 넣고 구현해라. 그러고 나서 **`loan_id = f"L{len(rows) + 1:04d}"` 가 무너지는 시나리오를 테스트로 재현**하고, 고쳐라. 고칠 때 선택지가 둘 이상이다(최대 순번 추적 / UUID / 저장소가 id를 발급). **셋을 나란히 적고 하나를 고른 이유를 세 줄로 쓴다.**
