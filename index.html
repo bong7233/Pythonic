@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>파이썬 완전 정복 — 기초부터 코딩테스트·실무·ROS 2까지</title>
-<link rel="stylesheet" href="assets/style.css?v=7a7e178315">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
+<link rel="stylesheet" href="assets/style.css?v=d7df7802f4">
+<!-- 파비콘: 픽셀 아트 로봇 머리. 외부 요청 없이 인라인 SVG 로 그린다. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect width='16' height='16' fill='%2310151b'/><rect x='6' y='0' width='4' height='2' fill='%234fd3c4'/><rect x='7' y='1' width='2' height='3' fill='%23f2b23e'/><rect x='0' y='6' width='2' height='4' fill='%23f2b23e'/><rect x='14' y='6' width='2' height='4' fill='%23f2b23e'/><rect x='2' y='4' width='12' height='9' fill='%23f2b23e'/><rect x='4' y='6' width='8' height='4' fill='%2310151b'/><rect x='5' y='7' width='2' height='2' fill='%234fd3c4'/><rect x='9' y='7' width='2' height='2' fill='%234fd3c4'/><rect x='5' y='11' width='6' height='1' fill='%2310151b'/></svg>">
 </head>
 <body>
 
@@ -17,7 +18,20 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
   </button>
   <a href="#/" id="brand">
-    <span class="brand-mark">🐍</span>
+    <span class="brand-mark" aria-hidden="true">
+      <!-- 인라인 SVG 라서 CSS 변수를 그대로 받는다 — 테마 전환 시 색도 같이 바뀐다. -->
+      <svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+        <rect x="6" y="0" width="4" height="2" fill="var(--accent-2)"/>
+        <rect x="7" y="1" width="2" height="3" fill="var(--accent)"/>
+        <rect x="0" y="6" width="2" height="4" fill="var(--accent)"/>
+        <rect x="14" y="6" width="2" height="4" fill="var(--accent)"/>
+        <rect x="2" y="4" width="12" height="9" fill="var(--accent)"/>
+        <rect x="4" y="6" width="8" height="4" fill="var(--ink)"/>
+        <rect x="5" y="7" width="2" height="2" fill="var(--accent-2)"/>
+        <rect x="9" y="7" width="2" height="2" fill="var(--accent-2)"/>
+        <rect x="5" y="11" width="6" height="1" fill="var(--ink)"/>
+      </svg>
+    </span>
     <span class="brand-text">파이썬 완전 정복</span>
   </a>
   <div class="topbar-spacer"></div>
@@ -47,7 +61,7 @@
           <span id="ps-pct">0%</span>
         </div>
         <div class="ps-text">
-          <strong id="ps-title">학습 진도</strong>
+          <strong id="ps-title">탐험 진행도</strong>
           <small id="ps-sub">0 / 0 절 완료</small>
         </div>
       </div>
@@ -86,9 +100,9 @@
   </div>
 </div>
 
-<script src="assets/highlight.js?v=7a7e178315"></script>
-<script src="assets/markdown.js?v=7a7e178315"></script>
-<script src="assets/bundle.js?v=7a7e178315"></script>
-<script src="assets/app.js?v=7a7e178315"></script>
+<script src="assets/highlight.js?v=d7df7802f4"></script>
+<script src="assets/markdown.js?v=d7df7802f4"></script>
+<script src="assets/bundle.js?v=d7df7802f4"></script>
+<script src="assets/app.js?v=d7df7802f4"></script>
 </body>
 </html>
