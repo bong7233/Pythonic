@@ -254,6 +254,7 @@ True
 >>> int("1²")
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    int("1²")
 ValueError: invalid literal for int() with base 10: '1²'
 >>> "１".isdigit()
 True

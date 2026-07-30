@@ -293,7 +293,11 @@ def solve(text):
 >>> parse("5\nkim 3\n")
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    parse("5\nkim 3\n")
+    ~~~~~^^^^^^^^^^^^^^
   File "<stdin>", line 5, in parse
+    assert len(rows) == n, f"줄 수 {len(rows)} != 선언 {n}"
+           ^^^^^^^^^^^^^^
 AssertionError: 줄 수 1 != 선언 5
 ```
 
@@ -612,6 +616,7 @@ assert solve(EX) == solve(EX)      # 이 한 줄이 이 범주 전체를 잡는�
 ... 
 Traceback (most recent call last):
   File "<stdin>", line 2, in <module>
+        name, days = line.split()
 ValueError: not enough values to unpack (expected 2, got 0)
 ```
 
@@ -643,6 +648,7 @@ False
 >>> max(nums)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    max(nums)
 ValueError: max() iterable argument is empty
 ```
 

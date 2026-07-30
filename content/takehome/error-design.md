@@ -150,16 +150,19 @@ print(seat.row)             # AttributeError: 'NoneType' object has no attribute
 >>> seats["A-9"]
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    seats["A-9"]
 KeyError: 'A-9'
 >>> "A-1".find("Z")
 -1
 >>> "A-1".index("Z")
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    "A-1".index("Z")
 ValueError: substring not found
 >>> int("A-1")
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    int("A-1")
 ValueError: invalid literal for int() with base 10: 'A-1'
 ```
 

@@ -277,6 +277,7 @@ KeyError: '내부 버그'
 >>> e
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    e
 NameError: name 'e' is not defined
 ```
 
@@ -1164,7 +1165,7 @@ inspect    code=54154  linetable=17580 (0.32x)
 >>> import collections
 >>> collections.OrderedDcit
 Traceback (most recent call last):
-  File "<python-input-1>", line 1, in <module>
+  File "<stdin>", line 1, in <module>
     collections.OrderedDcit
 AttributeError: module 'collections' has no attribute 'OrderedDcit'. Did you mean: 'OrderedDict'?
 ```

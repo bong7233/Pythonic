@@ -661,6 +661,7 @@ Counter({'A': 2, 'B': 1})
 >>> set.intersection(*[])
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    set.intersection(*[])
 TypeError: unbound method set.intersection() needs an argument
 ```
 

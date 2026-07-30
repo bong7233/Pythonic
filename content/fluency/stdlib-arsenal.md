@@ -403,6 +403,7 @@ $O(\varphi^n)$ 이 $O(n)$ 이 됐다. **네 자릿수 차이는 상수 최적화
 >>> f([1, 2])
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    f([1, 2])
 TypeError: unhashable type: 'list'
 ```
 
@@ -452,6 +453,7 @@ True
 >>> {[1, 2]}
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    {[1, 2]}
 TypeError: cannot use 'list' as a set element (unhashable type: 'list')
 ```
 

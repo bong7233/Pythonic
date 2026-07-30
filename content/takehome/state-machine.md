@@ -70,6 +70,7 @@ False
 >>> Movement("Out")
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    Movement("Out")
 ValueError: 'Out' is not a valid Movement
 ```
 
@@ -139,6 +140,7 @@ True
 ...
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    @unique
 ValueError: duplicate values found in <enum 'Guarded'>: SUBMITTED -> DRAFT
 ```
 :::
@@ -244,6 +246,7 @@ print("같은 값을 다시 읽으면:", StatusV2(saved).name)
 >>> json.dumps({"status": Status.DRAFT})
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    json.dumps({"status": Status.DRAFT})
 TypeError: Object of type Status is not JSON serializable
 when serializing dict item 'status'
 ```
@@ -352,7 +355,7 @@ False
 
 ## Enum 만으로는 상태 머신이 아니다
 
-이제 필드를 `Enum` 으로 바꿨다고 하자. 그런데 이건 여전히 상태 머신이 아니다.
+이제 필드를 `Enum` 으로 바꿨다고 하자. 그런데 이건 여전히 상태 머신이 아니다. 아래 세션은 **이 절에서 곧 만들 `purchase` 패키지를 미리 쓴 것**이다. 지금 그대로 따라 치면 `ModuleNotFoundError` 가 난다 — 파일이 전부 나온 뒤에 돌려 봐라.
 
 ```pyrepl
 >>> from purchase.order import PurchaseOrder
@@ -394,6 +397,29 @@ False
 ```
 
 상태 6개 × 사건 5개 = **30가지 조합 중 7가지만 허용된다.** 나머지 23가지를 어떻게 막을 것인가가 이 절의 본론이다.
+
+이 절의 코드가 앉는 자리다. 12.2의 재고 관리와 같은 최소 형태이고, 패키지 이름만 `purchase` 로 바뀌었다.
+
+```text nolines
+purchase-task/
+├── purchase/
+│   ├── __init__.py
+│   ├── states.py       OrderStatus, OrderEvent, TRANSITIONS, FINAL_STATES
+│   ├── errors.py       PurchaseError, InvalidTransition
+│   └── order.py        PurchaseOrder
+├── tests/
+│   └── test_order_states.py
+├── run_demo.py
+└── pyproject.toml      pythonpath = ["."] — tests 에서 purchase 를 import 할 수 있게 한다
+```
+
+```toml title="pyproject.toml"
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+```
+
+**`pythonpath` 한 줄을 빼먹으면 이 절의 테스트는 한 개도 안 돈다.** `pytest` 는 테스트 파일에서 위로 올라가며 `__init__.py` 가 없는 첫 디렉터리(`tests/`)만 `sys.path` 에 넣으므로 프로젝트 루트가 안 들어가고, 수집 단계에서 `ModuleNotFoundError: No module named 'purchase'` 로 죽는다. `pythonpath` 대신 프로젝트 루트에 **빈 `conftest.py`** 를 하나 둬도 같은 일이 된다. 둘의 차이와 왜 과제 제출에는 `pythonpath` 쪽인지는 [12.1](#/takehome-eval)에 있다.
 
 ```python title="purchase/states.py"
 from enum import Enum, auto
@@ -516,21 +542,27 @@ def next_status(order_id: str, status: S, event: E) -> S:
 :::
 
 ::: perf 두 안의 속도 차이는 판단 근거가 될 수 없다
-전이 10만 번을 세 방식으로 돌렸다. 세 번째는 `Enum` 없이 문자열 튜플을 키로 쓴 같은 표다.
+**무엇을 쟀는지부터 밝힌다.** 셋 다 `(상태, 사건) -> 다음 상태` 를 돌려주는 **함수를 한 번 부르는 것**이 1회이고, 그 호출을 `timeit` 으로 10만 번 돌렸다(`step(st, ev)`, `number=100_000`, `repeat=15`, 하위 5개). 상태와 사건은 미리 지역 변수에 담아 뒀다 — `apply()` 안에서 `self.status` 와 인자를 쓰는 실제 모양에 맞춘 것이다. 함수 본문만 다르다.
 
-| 방식 | 10만 회 |
-| --- | --- |
-| 문자열 키 `dict` 표 | 8.9 ~ 10.4 ms |
-| `Enum` + `match` | 29.8 ~ 31.8 ms |
-| `Enum` + `dict` 표 | 31.8 ~ 33.8 ms |
+- `step_dict` — 안 A 그대로. `apply` 의 본문인 `try: TRANSITIONS[status, event] / except KeyError: raise InvalidTransition`
+- `step_match` — 안 B의 `next_status` 본문 그대로. 세 함수의 인자를 맞추려고 `order_id` 만 뺐다
+- `step_str` — `step_dict` 과 같은 코드인데 표의 키와 값이 `("SUBMITTED", "APPROVE"): "APPROVED"` 처럼 전부 문자열이다
+
+| 방식 | 10만 회 | 문자열 대비 |
+| --- | --- | --- |
+| 문자열 키 `dict` 표 | 5.9 ~ 6.2 ms | ×1.0 |
+| `Enum` + `match` | 14.9 ~ 15.9 ms | ×2.5 ~ 2.6 |
+| `Enum` + `dict` 표 | 16.9 ~ 19.1 ms | ×2.9 ~ 3.1 |
 
 (Python 3.14.0rc2 / Linux 기준 실측. 절대값은 기기마다 다르지만 자릿수 차이는 어디서나 같다.)
 
+**절대값은 믿지 말고 마지막 열을 봐라.** 같은 기계에서도 다른 프로세스가 돌면 세 줄이 나란히 두 배로 뛴다. 흔들리지 않는 것은 배수다.
+
 두 가지를 읽어야 한다.
 
-**하나, `match` 와 `dict` 표의 차이는 10만 번에 2 ms 다.** 전이 하나당 20 나노초. 이 차이로 설계를 고르는 것은 근거 없는 선택을 근거 있는 것처럼 포장하는 일이다. 읽히는 쪽을 골라라.
+**하나, `match` 와 `dict` 표의 차이는 10만 번에 2~3 ms 다.** 전이 하나당 25 나노초 안팎. 이 차이로 설계를 고르는 것은 근거 없는 선택을 근거 있는 것처럼 포장하는 일이다. 읽히는 쪽을 골라라.
 
-**둘, `Enum` 은 문자열보다 3배쯤 느리다.** 이건 진짜 차이다. 원인도 분명하다 — `S.DRAFT` 같은 멤버 접근이 상수 로드보다 세 배 가까이 비싸고(100만 회에 8.2~8.3 ms 대 23.7~24.1 ms), `Enum.__hash__` 는 내부적으로 이름 문자열을 해싱하므로 `hash(str)` 보다 세 배 든다(100만 회에 39.0~40.2 ms 대 117.5~123.3 ms). 그래도 **10만 번에 23 ms** 다. 과제형이 다루는 데이터는 수천 건이고, 그 규모에서 이 차이는 사람이 인지할 수 없다([5.1](#/profiling)).
+**둘, `Enum` 은 문자열보다 3배쯤 느리다.** 이건 진짜 차이다. 원인도 분명하다 — `S.DRAFT` 같은 멤버 접근이 상수 로드보다 두 배 넘게 비싸고(`x = S.SUBMITTED` 대 `x = "SUBMITTED"`, 100만 회에 15.8~16.5 ms 대 7.2~7.7 ms), `Enum.__hash__` 는 내부적으로 이름 문자열을 해싱하므로 `hash(str)` 보다 세 배 든다(`hash(S.SUBMITTED)` 대 `hash("SUBMITTED")`, 100만 회에 72.8~77.3 ms 대 24.4~27.8 ms). 그래도 **10만 번에 12 ms** 다. 과제형이 다루는 데이터는 수천 건이고, 그 규모에서 이 차이는 사람이 인지할 수 없다([5.1](#/profiling)).
 :::
 
 ::: cote 시간 제한이 걸린 코딩테스트에서는 이야기가 뒤집힌다
@@ -656,14 +688,26 @@ for before, event, after in po.history:
 
 상태가 둘뿐이면 `bool` 이 정답일 때가 있다. 문제는 셋으로 늘 때다.
 
-```python
+```python title="bool_two_flags.py"
+from dataclasses import dataclass
+
+
 # ❌ 불리언 두 개 = 표현 가능한 조합이 네 가지. 그중 하나는 존재할 수 없다.
 @dataclass
 class Order:
     approved: bool = False
     cancelled: bool = False
+
+
 # approved=True, cancelled=True 를 막는 것이 아무것도 없다
+print(Order(approved=True, cancelled=True))
 ```
+
+```text nolines
+Order(approved=True, cancelled=True)
+```
+
+승인되면서 동시에 취소된 발주서가 예외 하나 없이 만들어졌다.
 
 판단 기준은 개수가 아니다.
 
@@ -828,7 +872,7 @@ pytest -q
 
 이 구분이 말장난이 아니라는 것은 실험으로 확인된다. 누군가 "취소는 언제나 되어야 한다"고 생각해서 `cancel()` 만 `apply` 를 우회하게 고쳤다고 하자.
 
-```python
+```python title="purchase/order.py — cancel() 만 이렇게 바꾼다 (조각 — 메서드 본문)"
     def cancel(self) -> None:
         self.status = OrderStatus.CANCELLED   # apply 를 우회했다
 ```

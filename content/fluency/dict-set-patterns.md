@@ -236,6 +236,7 @@ print(dict(per_book["kim"]))                           # {'PY-101': 2, 'ML-204':
 >>> {Counter("aab"): 1}
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    {Counter("aab"): 1}
 TypeError: cannot use 'collections.Counter' as a dict key (unhashable type: 'Counter')
 ```
 

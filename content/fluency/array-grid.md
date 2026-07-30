@@ -50,6 +50,7 @@
 >>> a[10]
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    a[10]
 IndexError: list index out of range
 ```
 
@@ -131,6 +132,7 @@ IndexError: list index out of range
 >>> list(zip(names, scores, strict=True))
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    list(zip(names, scores, strict=True))
 ValueError: zip() argument 2 is shorter than argument 1
 ```
 

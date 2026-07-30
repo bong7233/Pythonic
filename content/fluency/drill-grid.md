@@ -94,6 +94,7 @@ limit=2  구역합계=[4, 0, 12, 7]  만차=[1]
 >>> [sum(col) for col in zip(*tower, strict=True)]
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    [sum(col) for col in zip(*tower, strict=True)]
 ValueError: zip() argument 2 is shorter than argument 1
 ```
 
@@ -424,6 +425,7 @@ print("무작위 2만 건 대조 통과")
 >>> row[0] = "."
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    row[0] = "."
 TypeError: 'str' object does not support item assignment
 ```
 :::

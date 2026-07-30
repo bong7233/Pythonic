@@ -84,6 +84,7 @@ False
 >>> [counts[j] for j in range(-5, 6) if j != 0 and j < 1]
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    [counts[j] for j in range(-5, 6) if j != 0 and j < 1]
 IndexError: list index out of range
 ```
 
@@ -273,6 +274,7 @@ true         vs True       -> result: 타입 str (기대 bool)
 >>> local_peaks(counts=[3, 1, 4], k=1)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    local_peaks(counts=[3, 1, 4], k=1)
 TypeError: local_peaks() got an unexpected keyword argument 'counts'
 ```
 

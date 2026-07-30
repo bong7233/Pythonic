@@ -77,7 +77,7 @@ tests/test_station.py:1: in <module>
     from charger.station import start
 charger/station.py:3: in <module>
     from charger import gateway          # 이 줄에서 이미 접속이 일어난다
-charger/gateway.py:5: in <module>
+charger/gateway.py:4: in <module>
     _CONN = socket.create_connection(PG_HOST, timeout=0.5)   # 모듈 최상단
 E   ConnectionRefusedError: [Errno 111] Connection refused
 =========================== short test summary info ============================
@@ -116,7 +116,19 @@ FAILED tests/test_station.py::test_night_rate_is_cheaper - ConnectionRefusedE...
 
 세 번째 벽은 전역 상태다. `LOCKED` 는 모듈 전역이라 테스트 사이에 남는다.
 
-```python title="tests/test_global.py — 승인은 가짜로 갈아 끼운 뒤"
+```python title="tests/test_global.py — 승인은 autouse fixture 로 가짜를 끼웠다"
+from unittest.mock import MagicMock
+
+import pytest
+
+from charger import station
+
+
+@pytest.fixture(autouse=True)
+def stub_gateway(monkeypatch):
+    monkeypatch.setattr(station.gateway, "authorize", MagicMock(return_value="OK"))
+
+
 def test_charging_locks_the_connector():
     station.start("CARD-1", "A", hour=12)
     assert station.LOCKED == {"A": "CARD-1"}
@@ -326,57 +338,11 @@ class Connector(Protocol):
 :::
 
 ::: danger Protocol 상속은 런타임에 아무것도 막지 않는다
-`class TcpGateway(PaymentGateway):` 라고 명시적으로 상속하면 ABC처럼 지켜 줄 것 같다. 아니다.
+`class TcpGateway(PaymentGateway):` 라고 명시적으로 상속하면 ABC처럼 지켜 줄 것 같다. 아니다. **명시 상속도 `@runtime_checkable` 도 런타임 강제가 아니다.** 구현을 빠뜨린 메서드는 프로토콜 본문의 `...` 를 그대로 물려받아 조용히 `None` 을 돌려주고(`ABC` 였다면 인스턴스화 자체가 `TypeError` 다), `@runtime_checkable` 의 `isinstance` 는 메서드 **이름만** 보고 시그니처는 안 본다. 두 실험과 `ABC` 대조는 [2.4](#/protocol-typing)에 그대로 있다 — 여기서 반복하지 않는다.
 
-```pyrepl
->>> from typing import Protocol
->>> class Gateway(Protocol):
-...     def hold(self, card_id: str, amount: int) -> str: ...
-...
->>> class TcpGateway(Gateway):
-...     def authorize(self, card_id, amount):     # 이름을 잘못 썼다
-...         return "OK H-1"
-...
->>> g = TcpGateway()
->>> print(g.hold("CARD-1", 30000))
-None
-```
+경계 설계에서 이 사실이 특별히 무거운 이유는 따로 있다. **포트는 진짜와 가짜가 함께 지키기로 한 약속인데, 그 약속을 실행 중에는 아무도 검사하지 않는다.** 그리고 둘의 처지가 다르다. 가짜는 테스트가 매번 부르니 어긋나면 그 자리에서 드러난다. **진짜 어댑터는 테스트에서 한 번도 안 불린다.** 그래서 어긋남은 거의 언제나 진짜 쪽에서 생기고, `pytest` 는 초록불을 유지한다. 앞의 `MagicMock` 문제와 정확히 같은 모양이 `Protocol` 로 갈아탄 뒤에도 되돌아온 것이다.
 
-`hold` 를 구현하지 않았는데 **인스턴스가 만들어지고, 호출되고, `None` 을 돌려준다.** 프로토콜 본문의 `...` 가 진짜 함수 본문이라 그대로 상속된 것이다. 같은 실수를 `ABC` 로 하면 런타임이 막아 준다.
-
-```pyrepl
->>> from abc import ABC, abstractmethod
->>> class Gateway(ABC):
-...     @abstractmethod
-...     def hold(self, card_id: str, amount: int) -> str: ...
-...
->>> class TcpGateway(Gateway):
-...     def authorize(self, card_id, amount):
-...         return "OK H-1"
-...
->>> TcpGateway()
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-TypeError: Can't instantiate abstract class TcpGateway without an implementation for abstract method 'hold'
-```
-
-`@runtime_checkable` 을 붙여도 부족하다. `isinstance` 는 **메서드 이름만** 본다.
-
-```pyrepl
->>> from typing import Protocol, runtime_checkable
->>> @runtime_checkable
-... class Gateway(Protocol):
-...     def hold(self, card_id: str, amount: int) -> str: ...
-...
->>> class Wrong:
-...     def hold(self):          # 인자가 하나도 안 맞는다
-...         return 42
-...
->>> isinstance(Wrong(), Gateway)
-True
-```
-
-**결론은 "Protocol이 나쁘다"가 아니다.** mypy 는 상속하든 안 하든 이 실수를 잡는다(1.19.1 실측 — 상속하면 인스턴스를 만드는 자리에서 `Cannot instantiate abstract class`, 상속하지 않으면 아래의 조립 지점에서 `missing following protocol member`). 잡히려면 **검사기를 실제로 돌려야 한다**는 것이 요점이다.
+**결론은 "Protocol이 나쁘다"가 아니다.** mypy 는 상속하든 안 하든 이 실수를 잡는다(mypy 1.19.1 실측 — 상속하면 인스턴스를 만드는 자리에서 `Cannot instantiate abstract class`, 상속하지 않으면 아래의 조립 지점에서 `missing following protocol member`). 잡히려면 **검사기를 실제로 돌려야 한다**는 것이 요점이다.
 
 `Protocol` 을 쓰기로 했다면 둘 중 하나는 반드시 해라. **① 타입 검사기를 CI에 넣는다**([2.8](#/typecheckers), [6.6 CI/CD](#/ci)) **② 진짜 어댑터를 한 번이라도 실제로 호출하는 테스트를 둔다.** 둘 다 안 하면 `Protocol` 은 주석이나 다름없다. 그리고 굳이 상속할 이유는 없다 — 상속하면 어댑터가 도메인 패키지를 import 하게 되어 방금 그린 화살표 방향이 되돌아간다.
 :::
@@ -404,15 +370,42 @@ def build_station() -> ChargingStation:
 이 파일이 존재하는 것만으로 공짜 이득이 하나 붙는다. **타입 검사기가 어댑터의 이탈을 잡아 준다.** 위의 `TcpGateway` 에서 `hold` 를 실수로 `authorize` 로 바꿔 보면 이렇게 나온다.
 
 ```text nolines
+$ mypy .
 charger/main.py:11: error: Argument 1 to "ChargingStation" has incompatible type "TcpGateway"; expected "PaymentGateway"  [arg-type]
 charger/main.py:11: note: "TcpGateway" is missing following "PaymentGateway" protocol member:
 charger/main.py:11: note:     hold
 Found 1 error in 1 file (checked 10 source files)
 ```
 
+(mypy 1.19.1 과 2.3.0 양쪽에서 한 글자도 다르지 않았다. `10 source files` 는 아래 최종 트리의 `.py` 파일 열 개다 — 루트에 `conftest.py` 를 두면 열한 개가 되고, `pytest` 가 같은 환경에 없으면 `tests/` 의 두 파일에 `import-not-found` 가 더 붙는다.)
+
 앞의 `MagicMock` 이 조용히 통과시켰던 그 사고를, 여기서는 검사기가 문장으로 알려 준다. **가짜와 진짜가 같은 `Protocol` 을 향하고 있고 조립 지점이 한 군데면, 어긋남은 정적으로 드러난다.** mypy/pyright 설정은 [2.8](#/typecheckers)에 있다.
 
 ## 진짜 구현과 가짜 구현
+
+구현을 쓰기 전에 예외부터 정한다. `hold` 가 거절을 어떻게 알리는지는 **포트의 일부**다. 어댑터가 소켓 응답 문자열을 그대로 위로 던지면, 도메인이 결제사 프로토콜을 알게 되어 경계가 새기 때문이다.
+
+```python title="charger/errors.py"
+"""도메인 예외. 바깥세상의 사정은 여기서 끝난다."""
+
+
+class ChargerError(Exception):
+    """이 프로그램이 던지는 모든 예외의 뿌리."""
+
+
+class PaymentDeclined(ChargerError):
+    """결제사가 사전 승인을 거절했다. 세션을 시작하지 않는다."""
+
+
+class CaptureFailed(ChargerError):
+    """확정에 실패했다. 세션은 미정산으로 남는다."""
+
+
+class WrongState(ChargerError):
+    """지금 상태에서 허용되지 않는 전이다."""
+```
+
+클래스 넷, 본문은 전부 docstring 한 줄뿐인 파일이다. **왜 뿌리 클래스를 하나 두는지, 예외에 무엇을 담는지, 어디서 잡고 어디서 통과시키는지**는 [12.5](#/error-design)에서 따로 다룬다. 여기서 필요한 것은 하나뿐이다 — 진짜와 가짜가 **같은 예외**를 던져야 테스트가 진짜 경로를 대신 검증한다.
 
 이제 포트 하나에 구현 둘을 나란히 놓는다.
 
@@ -688,6 +681,42 @@ def test_stop_without_start_is_rejected():
         station.stop()
 ```
 
+요금 계산은 별도 파일로 떨어진다. `pricing.py` 에는 경계가 없으므로 **스테이션도, 가짜도 필요 없다.** 경계를 밖으로 밀어내면 이렇게 순수 함수만 남은 조각이 생기고, 그 조각의 테스트는 인자와 반환값이 전부다.
+
+```python title="tests/test_pricing.py"
+import pytest
+
+from charger.pricing import BASE_FEE, DAY_RATE, NIGHT_RATE, fee, unit_rate
+
+
+@pytest.mark.parametrize(
+    "hour, rate",
+    [
+        (6, NIGHT_RATE),      # 심야의 마지막 시간
+        (7, DAY_RATE),        # 주간 시작 — 경계
+        (22, DAY_RATE),       # 주간의 마지막 시간
+        (23, NIGHT_RATE),     # 심야 시작 — 경계
+    ],
+)
+def test_unit_rate_switches_at_the_boundary(hour, rate):
+    assert unit_rate(hour) == rate
+
+
+def test_zero_usage_still_pays_the_base_fee():
+    assert fee(0, hour=12) == BASE_FEE
+
+
+def test_day_session_is_billed_at_the_day_rate():
+    assert fee(12_000, hour=12) == BASE_FEE + 12 * DAY_RATE
+
+
+def test_sub_kwh_usage_is_truncated_not_rounded():
+    # 1.999 kWh x 180원 = 359.82원 -> 359원. 요구사항에 없어서 버리는 쪽으로 결정했다.
+    assert fee(1_999, hour=12) == BASE_FEE + 359
+```
+
+`23`, `7` 을 경계로 찍은 네 줄이 요구사항 3번의 "심야(23:00~07:00)"를 그대로 옮긴 것이다. **끝의 절삭 규칙은 요구사항에 없어서 내가 결정한 것이므로, 결정했다는 사실을 테스트로 남긴다**([12.2](#/requirements-to-model)).
+
 ```text nolines
 $ pytest -q
 ..............                                                           [100%]
@@ -697,16 +726,22 @@ $ pytest -q
 `test_declined_card_never_locks_the_connector` 와 `test_capture_failure_leaves_session_unsettled_but_unlocks` 를 보라. **끊기 전에는 이 두 개를 아예 짤 수 없었다.** 요구사항 1번과 4번은 이 두 테스트로 증명된다. 경계를 끊는다는 것은 결국 이것이다 — **명세의 실패 경로를 코드로 쓸 수 있게 만드는 일.**
 
 ::: perf 가짜가 빠른 것은 부수 효과가 아니라 요구사항이다
-같은 시나리오(승인 → 잠금 → 12 kWh → 해제 → 확정)를 진짜 어댑터와 가짜로 각각 실행했다. 100회씩 5묶음을 돌려 **묶음 평균의 최소~최대**를 적었다. 진짜 쪽 승인 서버는 **같은 머신의 루프백**에 띄웠다. 즉 네트워크 지연이 0인, 진짜에 가장 유리한 조건이다.
+같은 시나리오(승인 → 잠금 → 12 kWh → 해제 → 확정)를 진짜 어댑터와 가짜로 각각 실행했다. 100회씩 5묶음을 돌려 **묶음 평균의 최소~최대**를 적었다.
+
+측정 조건을 밝혀 둔다. 진짜 쪽 수치는 이 셋에 따라 배 단위로 흔들리므로, 조건 없는 절대값은 의미가 없다.
+
+- **승인 서버는 별도 프로세스**로 띄우고 `127.0.0.1` 루프백으로 붙었다. 네트워크 지연이 0인, 진짜에 가장 유리한 조건이다.
+- **장치 파일은 tmpfs 가 아니라 로컬 디스크**(ext4)에 뒀다. tmpfs 에 두면 진짜 쪽이 더 빨라진다.
+- 세션마다 연결을 새로 연다. `TcpGateway._call` 이 매번 `create_connection` 하는 그 코드 그대로다.
 
 | 구현 | 세션 1회 |
 | --- | --- |
-| `TcpGateway` + `SysfsConnector`(파일) | 1.26 ~ 1.54 ms |
-| `FakeGateway` + `FakeConnector` | 2.3 ~ 5.1 µs |
+| `TcpGateway` + `SysfsConnector`(파일) | 0.38 ~ 0.55 ms |
+| `FakeGateway` + `FakeConnector` | 1.7 ~ 3.0 µs |
 
 (Python 3.14.0rc2 / Linux 기준 실측. 절대값은 기기마다 다르지만 자릿수 차이는 어디서나 같다.)
 
-**세 자릿수 차이다.** 그리고 이건 하한이다. 실제 결제사는 다른 네트워크 너머에 있고, 그 왕복 시간이 여기 그대로 더해진다. 테스트 스무 개가 1초를 넘기기 시작하면 사람은 `pytest` 를 안 치게 된다. 속도는 편의가 아니라 **테스트가 실제로 돌아가느냐**의 문제다.
+**같은 묶음끼리 맞대면 130 ~ 320배, 세 자릿수 차이다.** 그리고 이건 하한이다. 실제 결제사는 다른 네트워크 너머에 있고, 그 왕복 시간이 여기 그대로 더해진다. 테스트 스무 개가 1초를 넘기기 시작하면 사람은 `pytest` 를 안 치게 된다. 속도는 편의가 아니라 **테스트가 실제로 돌아가느냐**의 문제다.
 :::
 
 ## 시계와 난수 — 눈에 안 보이는 경계
@@ -826,6 +861,8 @@ charging-station/
 
 파일 여덟 개다. 구조 자체는 [12.7](#/project-structure)에서 따로 다룬다.
 
+이 절의 `pytest` 출력들은 전부 이 트리를 루트에서 돌린 것이다. 그러려면 **`charger` 가 `sys.path` 에 올라와 있어야 한다.** `pip install -e .` 를 한 번 하거나, 루트에 빈 `conftest.py` 를 하나 두면 된다(pytest 는 `conftest.py` 가 있는 디렉터리를 `sys.path` 에 넣는다). 안 하면 `ModuleNotFoundError: No module named 'charger'` 로 수집 단계에서 죽는다 — 앞에서 본 것과 증상은 같지만 원인은 경계가 아니라 패키징이다. 이 구분과 `pyproject.toml` 의 내용은 [12.7](#/project-structure)과 [6.5](#/packaging)에 있다.
+
 ::: note fakes.py 를 패키지 안에 둘 것인가, tests/ 에 둘 것인가
 두 안 다 흔하다.
 
@@ -861,6 +898,8 @@ charging-station/
 
 ::: quiz 설계 과제 — 읽지 말고 결정하고 짜라
 답을 고르는 문제가 아니다. 전부 **코드를 짜거나 판단을 문장으로 적는** 과제다.
+
+소재는 [12.2](#/requirements-to-model)의 회의실 예약을 **일부러 그대로 이어받는다.** 거기서는 요구사항에서 명사를 뽑아 모델을 세웠다. 여기서는 같은 도메인에 요구사항 몇 개를 더 붙여 놓고 **경계만** 본다. 모델을 처음부터 다시 세우는 시간을 아끼고, 같은 요구사항 문장이 모델링 관점과 경계 관점에서 어떻게 다르게 읽히는지 비교하기 위해서다.
 
 **1. 경계 선별 (10분, 코드 없음)**
 아래 요구사항에서 Q1~Q3을 적용해 **끊을 것과 끊지 않을 것**을 표로 나눠라. 각 항목마다 어느 질문에서 걸렸는지 적어라.

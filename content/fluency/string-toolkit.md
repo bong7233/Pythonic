@@ -99,6 +99,7 @@ False
 >>> int("")
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    int("")
 ValueError: invalid literal for int() with base 10: ''
 ```
 
@@ -279,6 +280,7 @@ True
 >>> "A-12".index("=")
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    "A-12".index("=")
 ValueError: substring not found
 ```
 
@@ -400,6 +402,7 @@ print("매출", sum(price * qty for *_rest, price, qty in rows))
 >>> code[100]
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    code[100]
 IndexError: string index out of range
 ```
 
@@ -472,6 +475,7 @@ ASCII 쪽은 전부 같은 객체다. 새로 만드는 게 아니라 그 싱글�
 >>> "-".join(["A", 1, "B"])
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    "-".join(["A", 1, "B"])
 TypeError: sequence item 1: expected str instance, int found
 >>> "-".join(str(x) for x in ["A", 1, "B"])
 'A-1-B'
@@ -583,6 +587,7 @@ energy      2300
 >>> "SEO-04821-A"[4] = "9"
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    "SEO-04821-A"[4] = "9"
 TypeError: 'str' object does not support item assignment
 >>> chars = list("SEO-04821-A")
 >>> chars[4] = "9"

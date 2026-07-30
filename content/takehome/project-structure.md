@@ -199,6 +199,7 @@ _NamespacePath(['/.../ns/submit/parking', '/.../ns/elsewhere/parking'])
 >>> import parking.legacy
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    import parking.legacy
 ModuleNotFoundError: No module named 'parking.legacy'
 ```
 

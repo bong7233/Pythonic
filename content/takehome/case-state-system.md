@@ -212,6 +212,7 @@ True
 >>> Coin(300)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    Coin(300)
 ValueError: 300 is not a valid Coin
 ```
 

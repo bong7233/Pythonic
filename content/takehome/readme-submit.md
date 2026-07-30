@@ -76,6 +76,7 @@ A를 여기까지 읽은 평가자는 **아직 아무것도 실행하지 못했�
 >>> importlib.import_module("stockroom")
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    importlib.import_module("stockroom")
 ModuleNotFoundError: No module named 'stockroom'
 ```
 

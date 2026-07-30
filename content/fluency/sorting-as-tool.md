@@ -131,6 +131,7 @@ n=5000  이중 루프  1050 ~ 1121 ms      정렬 후 인접  0.95 ~ 1.07 ms
 >>> sorted(jobs)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    sorted(jobs)
 TypeError: '<' not supported between instances of 'dict' and 'dict'
 ```
 
@@ -151,6 +152,7 @@ TypeError: '<' not supported between instances of 'dict' and 'dict'
 >>> heapq.heappop(h)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
+    heapq.heappop(h)
 TypeError: '<' not supported between instances of 'dict' and 'dict'
 ```
 
