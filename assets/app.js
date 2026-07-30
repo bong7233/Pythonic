@@ -183,6 +183,14 @@
       '<h1 class="home-title">파이썬 완전 정복</h1>' +
       '<p class="home-sub">언어의 밑바닥부터 자료구조·알고리즘, 코딩테스트 실전, 그리고 ROS 2로 로봇을 움직이는 데까지. ' +
       '코딩테스트를 통과하고 실제 로봇 시스템을 만드는 데 필요한 것만, 대신 끝까지.</p>' +
+      // 장식용 픽셀 풍경. 내용이 없으므로 스크린리더에서는 숨긴다.
+      '<div class="home-scene" aria-hidden="true">' +
+      '<i class="spr hs-tree-a"></i><i class="spr hs-tree-b"></i><i class="spr hs-bush"></i>' +
+      '<i class="spr hs-flower"></i><i class="spr hs-mushroom"></i><i class="spr hs-rock"></i>' +
+      '<i class="spr hs-grass"></i>' +
+      '<i class="spr hs-crystal"></i><i class="spr hs-slime"></i><i class="spr hs-bat"></i>' +
+      '<i class="spr hs-robot"></i>' +
+      '</div>' +
       '<div class="home-stats">' +
       stat(BOOK.toc.length, '부(Part)') +
       stat(CHAPTERS.length, '절(Chapter)') +
