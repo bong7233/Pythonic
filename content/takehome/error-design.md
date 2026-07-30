@@ -8,6 +8,8 @@
 
 공연 좌석 예약을 만든다. `reserve` 는 성공하면 `True`, 실패하면 `False` 를 돌려준다. 흔한 설계다.
 
+이 절 내내 쓸 소재다. [12.11](#/self-review)의 스터디룸 좌석 예약과 도메인이 겹쳐 보이지만 **다른 과제다.** 거기는 다 짜 놓은 코드를 제출 직전에 **읽는** 훈련이고, 여기는 실패를 **어떻게 표현할지 고르는** 훈련이다. 좌석 코드 형식부터 다르다 — 여기는 `A-1` 처럼 하이픈이 들어가고 거기는 `A1` 이다. 두 절을 이어서 읽되 코드를 섞지 마라.
+
 ```python title="reserve 가 bool 을 반환한다"
 class Hall:
     def __init__(self, codes):
@@ -192,19 +194,64 @@ ValueError: invalid literal for int() with base 10: 'A-1'
 :::
 
 ::: perf "예외는 느리니까 반환값" 은 과제형에서 성립하지 않는다
-좌석 코드 10만 건을 파싱하면서, 형식 오류를 예외로 알리는 쪽과 `None` 으로 알리는 쪽을 비교했다. 두 함수 모두 같은 `re.fullmatch` 를 쓰고 차이는 실패 통보 방식뿐이다.
+좌석 코드 10만 건을 파싱하면서, 형식 오류를 예외로 알리는 쪽과 `None` 으로 알리는 쪽을 비교했다. 두 함수 모두 같은 `re.fullmatch` 를 쓰고 차이는 실패 통보 방식뿐이다. 배수는 파싱 함수가 무엇을 하느냐에 따라 크게 달라지므로, 잰 코드를 그대로 싣는다.
 
-| 실패율 | 예외 | `None` 반환 |
-| --- | --- | --- |
-| 0% | 44.0 ~ 46.6 ms | 44.5 ~ 45.2 ms |
-| 10% | 46.0 ~ 47.7 ms | 41.6 ~ 42.2 ms |
-| 100% | 45.0 ~ 46.6 ms | 18.0 ~ 18.7 ms |
+```python title="bench.py — 잰 것이 정확히 이 네 함수다"
+import re
 
-(각 값은 7회 반복 중 최솟값, 프로세스를 5번 새로 띄워 얻은 범위. Python 3.14.0rc2 / Linux 기준 실측. 절대값은 기기마다 다르지만 자릿수 차이는 어디서나 같다.)
+SEAT_CODE = re.compile(r"[A-Z]-[1-9][0-9]*")
 
-**실패가 드물면 차이가 사실상 없다.** 전부 성공할 때는 두 방식이 같고, 10만 건 중 1만 건이 깨져 있어도 **전체에서 4~6 ms** 차이다. 100% 구간에서 역산하면 예외 하나를 만들고 던지고 잡는 데 **0.26~0.29 µs** 가 든다. 과제형 제출물이 다루는 규모에서는 이 숫자가 설계를 바꿀 근거가 되지 못한다.
 
-**차이가 2.5배로 벌어지는 것은 실패율 100%에서뿐이다.** 그리고 그 지점이 진짜 신호다. 실패가 매번 일어난다면 그건 예외적인 사건이 아니라 **정상 흐름**이고, 애초에 예외로 표현할 게 아니었다. 비용 계산의 결론과 설계의 결론이 같은 곳을 가리킨다. 예외 자체의 비용 구조는 [1.16](#/exceptions)의 EAFP/LBYL 측정에 있다.
+class InvalidSeatCode(Exception):
+    def __init__(self, raw):
+        super().__init__(raw)
+        self.raw = raw
+
+
+def parse_raise(raw):
+    if SEAT_CODE.fullmatch(raw) is None:
+        raise InvalidSeatCode(raw)
+    return raw
+
+
+def parse_none(raw):
+    if SEAT_CODE.fullmatch(raw) is None:
+        return None
+    return raw
+
+
+def count_ok_raise(codes):                    # 호출자도 방식에 맞춰 달라진다
+    ok = 0
+    for raw in codes:
+        try:
+            parse_raise(raw)
+        except InvalidSeatCode:
+            continue
+        ok += 1
+    return ok
+
+
+def count_ok_none(codes):
+    ok = 0
+    for raw in codes:
+        if parse_none(raw) is not None:
+            ok += 1
+    return ok
+```
+
+실패 입력은 `a-1` 처럼 대소문자를 틀린 코드다(첫 글자에서 정규식이 바로 실패한다). 10만 건을 `timeit` 로 7회 반복해 최솟값을 취하고, 프로세스를 열 번 새로 띄워 범위를 얻었다.
+
+| 실패율 | 예외 | `None` 반환 | 배수 |
+| --- | --- | --- | --- |
+| 0% | 16.2 ~ 18.4 ms | 16.2 ~ 17.1 ms | 0.96 ~ 1.14 |
+| 10% | 21.2 ~ 23.5 ms | 15.9 ~ 17.6 ms | 1.26 ~ 1.37 |
+| 100% | 50.4 ~ 55.8 ms | 11.0 ~ 11.6 ms | 4.4 ~ 4.8 |
+
+(Python 3.14.0rc2 / Linux 기준 실측. 절대값은 기기마다 다르지만 자릿수 차이는 어디서나 같다.)
+
+**실패가 드물면 차이가 사실상 없다.** 전부 성공할 때는 두 방식이 같고(배수가 1을 사이에 두고 흔들린다), 10만 건 중 1만 건이 깨져 있어도 **전체에서 4~6 ms** 차이다. 100% 구간에서 역산하면 실패 한 건에 **0.39~0.44 µs** 가 더 든다. 예외 객체를 만들고 던지고 **같은 프레임에서** 잡는 것만 따로 재면 **0.25~0.27 µs** 이니, 나머지 0.1 µs 남짓은 함수 경계를 넘어 전파하고 `try` 를 빠져나오는 값이다. 과제형 제출물이 다루는 규모에서는 어느 숫자도 설계를 바꿀 근거가 되지 못한다.
+
+**차이가 배수로 벌어지는 것은 실패율 100%에서뿐이다.** 그리고 그 배수는 고정된 값이 아니다. 위 코드에서는 4.4~4.8배인데, 두 함수 앞에 `strip()`/`replace()` 같은 정규화를 한 줄 붙여 **실패든 성공이든 매번 같은 일을 하게** 만들면 같은 기기에서 2.7~2.8배로 내려간다. 예외 비용은 그대로인데 분모가 커졌기 때문이다. **구현에 따라 2~5배**로 보면 된다 — 배수를 외우는 건 의미가 없다. 중요한 건 **그 지점**이고, 그 지점이 진짜 신호다. 실패가 매번 일어난다면 그건 예외적인 사건이 아니라 **정상 흐름**이고, 애초에 예외로 표현할 게 아니었다. 비용 계산의 결론과 설계의 결론이 같은 곳을 가리킨다. 예외 자체의 비용 구조는 [1.16](#/exceptions)의 EAFP/LBYL 측정에 있다.
 :::
 
 ## 도메인 예외 계층 — 뿌리 하나, 잎 몇 개
@@ -291,6 +338,30 @@ class PaymentDeclined(BookingError):
 
 - 전부 처리하고 싶으면 `except BookingError`.
 - 하나만 다르게 처리하고 싶으면 `except SeatTaken`.
+
+오른쪽 가지는 우리가 만든 규칙이 아니라 **남의 시스템의 말**이다. 이 절에서는 결제 SDK 를 이렇게 얇게 흉내 낸다. 실제 SDK 라면 이 파일 대신 `pip install` 한 패키지의 예외를 그대로 쓴다.
+
+```python title="seatbook/gateway.py"
+"""결제 게이트웨이 쪽 예외. 남의 시스템의 말이므로 BookingError 아래에 두지 않는다."""
+
+
+class GatewayError(Exception):
+    """게이트웨이 호출이 실패했다. 우리 도메인의 규칙 위반이 아니다."""
+
+
+class CardRejected(GatewayError):
+    """카드사가 거절했다. 거절 사유 코드가 함께 온다."""
+
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.code = code            # 게이트웨이가 준 코드 그대로. 번역은 booking.py 가 한다
+
+
+class GatewayTimeout(GatewayError):
+    """응답이 없다. 결제가 됐는지 안 됐는지 모른다 — 이것이 CardRejected 와 다른 점이다."""
+```
+
+`CardRejected` 가 `code` 를 속성으로 갖는 것에 주목해라. 이 한 줄 때문에 뒤에서 `PaymentDeclined(amount, e.code)` 로 번역할 수 있다. **남의 예외에서 꺼낼 게 메시지 문자열밖에 없으면 번역이 파싱이 된다.**
 
 ### 무엇을 기준으로 나누는가
 
@@ -436,7 +507,59 @@ def __str__(self) -> str:
   cli.py        여기서 처음이자 마지막으로 잡는다. 종료 코드로 바꾼다.
 ```
 
-진입점 코드는 이렇게 생긴다.
+층이 셋이니 파일도 셋이다. 아래부터 편다. `hall.py` 에는 **`except` 가 한 줄도 없다.**
+
+```python title="seatbook/hall.py — reserve() 본문만 빼고 전부"
+import re
+
+from .errors import InvalidSeatCode, SeatLimitExceeded, SeatTaken, UnknownSeat
+
+SEAT_CODE = re.compile(r"[A-Z]-[1-9][0-9]*")     # 대문자 한 글자 - 1 이상의 정수
+
+
+def parse_seat_code(raw: str) -> str:
+    """형식만 검사한다. 이 공연장에 있는 좌석인지는 Hall 이 판단한다."""
+    if SEAT_CODE.fullmatch(raw) is None:
+        raise InvalidSeatCode(raw)
+    return raw
+
+
+class Hall:
+    def __init__(self, codes, seat_limit: int = 4) -> None:
+        self._holder: dict[str, str | None] = {c: None for c in codes}
+        self.seat_limit = seat_limit
+
+    # --- 조회: 없는 것이 정상이므로 예외를 쓰지 않는다 ---
+
+    def holder_of(self, code: str) -> str | None:
+        """예약자를 돌려준다. 빈자리든 없는 좌석이든 None."""
+        return self._holder.get(code)
+
+    def free_seats(self) -> list[str]:
+        return sorted(c for c, who in self._holder.items() if who is None)
+
+    def seats_of(self, customer: str) -> list[str]:
+        return sorted(c for c, who in self._holder.items() if who == customer)
+
+    # --- 실행: 규칙을 어기면 예외 ---
+
+    def reserve(self, codes, customer: str) -> list[str]:
+        ...          # 본문은 아래 '실패해도 상태는 그대로여야 한다' 에서 채운다
+
+    def release(self, codes, customer: str) -> None:
+        """내가 잡은 좌석만 푼다. 남의 좌석은 건드리지 않는다."""
+        for code in codes:
+            if self._holder.get(code) == customer:
+                self._holder[code] = None
+```
+
+`parse_seat_code` 의 정규식이 이 절의 출력 절반을 만든다. `A-1`, `C-9`, `Z-9` 는 **형식을 통과한다** — 이 공연장에 있는 좌석인지는 형식이 답할 질문이 아니다. `a-1` 은 소문자라서, `A-0` 은 좌석 번호가 1부터라서 거부된다. **형식 검사와 존재 검사는 다른 질문이고, 그래서 `InvalidSeatCode` 와 `UnknownSeat` 로 갈린다.** 하나로 합치면 사용자에게 "오타를 고쳐라"와 "다른 자리를 골라라" 중 무엇을 말해야 할지 알 수 없게 된다.
+
+조회 세 개가 전부 예외를 안 쓰는 것도 의도다. 특히 `holder_of` 가 `self._holder[code]` 가 **아니라** `self._holder.get(code)` 인 것이 중요하다. 대괄호로 썼다면 "이 자리 비었나?"를 묻는 것만으로 `KeyError` 가 나서 호출자가 `try` 를 둘러야 한다. 앞 표의 **조회는 `None`, 실행은 예외**가 파일 안에서는 이렇게 생겼다.
+
+`reserve()` 본문을 비워 둔 이유는 하나다. 그 안에서 **검사와 변경의 순서**를 어떻게 잡느냐가 이 절 뒷부분의 주제다. 지금은 "규칙을 어기면 `BookingError` 를 던진다"까지만 알면 된다.
+
+가운데 층 `booking.py` 는 바로 뒤의 「경계에서는 번역한다」에 있다. 맨 위 진입점은 이렇게 생긴다.
 
 ```python title="cli.py"
 import sys
@@ -637,7 +760,7 @@ print("남은 자리:", hall.free_seats())
 
 고치는 방법은 하나다. **다 검사하고, 그 다음에 다 바꾼다.**
 
-```python title="seatbook/hall.py — reserve() 메서드"
+```python title="seatbook/hall.py — 앞에서 비워 둔 reserve() 본문"
     def reserve(self, codes, customer: str) -> list[str]:
         """일행 좌석을 한꺼번에 잡는다. 하나라도 안 되면 아무것도 바뀌지 않는다."""
         codes = list(codes)
@@ -670,7 +793,40 @@ print("남은 자리:", hall.free_seats())
 
 성공 경로만 테스트한 제출물은 아주 많다. 실패 경로 테스트가 있으면 그것만으로 눈에 띈다. 무엇을 얼마나 테스트할지는 [12.6](#/test-strategy)에서 본격적으로 다루고, 여기서는 **오류 설계가 테스트에 어떻게 드러나는지**만 본다.
 
-```python title="tests/test_errors.py (일부)"
+파일 하나다. 머리말부터 본다 — **`hall` fixture 와 가짜 게이트웨이가 어떻게 생겼는지 모르면 아래 네 개는 읽을 수 없다.**
+
+```python title="tests/test_errors.py — 머리말"
+import pytest
+
+from seatbook.booking import book
+from seatbook.errors import PaymentDeclined, SeatTaken
+from seatbook.gateway import CardRejected
+from seatbook.hall import Hall
+
+
+@pytest.fixture
+def hall():
+    """5석짜리 공연장. 테스트마다 새로 만든다."""
+    return Hall(["A-1", "A-2", "A-3", "B-1", "B-2"])
+
+
+class FakeGateway:
+    """실패를 생성자로 주입받는 가짜. 진짜 게이트웨이는 부르지 않는다."""
+
+    def __init__(self, fail=None):
+        self.fail = fail
+        self.charged = []
+
+    def charge(self, customer, amount):
+        if self.fail is not None:
+            raise self.fail
+        self.charged.append((customer, amount))
+        return "RCPT-TEST"
+```
+
+fixture 와 가짜를 `conftest.py` 로 빼지 않고 **테스트 파일 안에 뒀다.** 쓰는 파일이 하나뿐이면 그게 읽기 쉽다([12.6](#/test-strategy)). `tests/` 에서 `seatbook` 을 import 할 수 있는 이유는 `pyproject.toml` 에 `[tool.pytest.ini_options]` 의 `pythonpath = ["."]` 가 있기 때문이다 — 그 설정을 왜 그렇게 정했는지는 [12.1](#/takehome-eval)과 [12.7](#/project-structure)에 있다.
+
+```python title="tests/test_errors.py — 실패 경로 네 개"
 def test_이미_예약된_좌석은_SeatTaken_으로_거부한다(hall):
     hall.reserve(["A-1"], "kim")
 
@@ -714,9 +870,11 @@ def test_결제가_거절되면_좌석이_풀리고_도메인_예외로_바뀐�
 
 ```bash
 $ uv run --python 3.14 --with pytest pytest -q
-.................                                                        [100%]
-17 passed in 0.02s
+....                                                                     [100%]
+4 passed in 0.01s
 ```
+
+**이 절이 보인 파일만 돌린 결과다.** 실제 제출물이라면 여기에 성공 경로와 조회 메서드 테스트가 더 붙어 스무 개쯤 된다. 점 네 개가 이 절의 전부인 이유는, 지금 확인하려는 것이 커버리지가 아니라 **오류 설계가 테스트에 드러나는 방식**이기 때문이다.
 
 네 테스트가 각각 다른 것을 지키고 있다.
 
@@ -743,7 +901,11 @@ def test_이미_예약된_좌석은_거부한다(hall):
 
 지금까지의 모든 논의가 겨냥하는 하나의 적이 있다. **실패했는데 아무 일도 안 일어난 것처럼 보이는 코드**다. 세 가지 얼굴로 나타난다.
 
-```python title="조용한 실패 3종 (앞의 Hall 과 errors.py 를 그대로 쓴다)"
+```python title="조용한 실패 3종 (앞에서 만든 seatbook 패키지를 그대로 쓴다)"
+from seatbook.errors import BookingError
+from seatbook.hall import Hall
+
+
 # ❌ ① 예외를 삼킨다
 def book_quiet(codes, customer):
     try:
@@ -765,6 +927,14 @@ def book_logged(codes, customer):
     except BookingError as e:
         print(f"  [log] 예약 실패: {e}")
     return []
+
+
+hall = Hall(["A-1", "A-2", "A-3"])
+hall.reserve(["A-1"], "kim")                  # A-1 은 이미 kim 것이다 — 이게 전제다
+
+print("① 반환값 :", book_quiet(["A-1"], "lee"), " 좌석 상태:", hall.holder_of("A-1"))
+print("② 등급 오타 'R석' 의 가격:", seat_price("R석"), "원")
+print("③ 발권 매수:", len(book_logged(["A-1"], "lee")), "장 — 호출자는 성공한 줄 안다")
 ```
 
 ```text nolines
@@ -805,6 +975,12 @@ with contextlib.suppress(FileNotFoundError):
 **안 B — 규칙 검사를 예외 목록으로 뽑는다.** 규칙은 한 군데 두고, 던질지 모을지는 호출자가 고른다.
 
 ```python title="안 B — 규칙은 한 군데, 표현은 두 가지"
+from seatbook.errors import (
+    BookingError, InvalidSeatCode, SeatLimitExceeded, SeatTaken, UnknownSeat,
+)
+from seatbook.hall import Hall, parse_seat_code
+
+
 class ReviewedHall(Hall):
     def problems_with(self, codes, customer) -> list[BookingError]:
         """어긴 규칙을 전부 모아 돌려준다. 던지지는 않는다."""
@@ -834,6 +1010,21 @@ class ReviewedHall(Hall):
         for code in codes:
             self._holder[code] = customer
         return codes
+
+
+hall = ReviewedHall(["A-1", "A-2", "A-3"])
+hall.reserve(["A-1"], "kim")
+requested = ["a-1", "A-1", "C-9"]             # 형식 오류 + 이미 예약됨 + 없는 좌석
+
+try:
+    hall.reserve(requested, "lee")
+except BookingError as e:
+    print("예약 실행 경로가 보는 것:", e)
+
+print("검증 화면이 보는 것:")
+for p in hall.problems_with(requested, "lee"):
+    print(f"   - [{type(p).__name__}] {p}")
+print("상태는 그대로:", hall.free_seats())
 ```
 
 ```text nolines
@@ -930,26 +1121,28 @@ class SeatTakenAfterHoldExpiredError(SeatTakenError): ...
 - **오류 프레임워크를 만들지 마라.** 예외 클래스를 추가할 때마다 그것을 따로 잡는 코드나 테스트를 함께 만들 수 있는지 물어라.
 
 ::: quiz 설계 과제 — 읽지 말고 짜고 결정해라
-소재는 **주차장 정산기**다. 이 절의 좌석 예약 코드를 그대로 옮기지 말고, 아래 요구사항에서 다시 판단해라.
+소재는 **동네 세탁소 접수 창구**다. 이 절의 좌석 예약 코드를 그대로 옮기지 말고, 아래 요구사항에서 다시 판단해라. (주차장 정산기는 [12.6](#/test-strategy)이 절 전체의 러닝 예제로 쓴다. 여기서 미리 풀어 버리면 다음 절에서 볼 것이 없어진다.)
 
-> ① 차량은 `12가3456` 형식의 번호로 식별한다. ② 입차하면 입차 시각이 기록된다. ③ 출차할 때 요금을 계산해 정산한다. ④ 요금은 최초 30분 1,000원, 이후 10분마다 500원이다. ⑤ 정기권 차량은 요금이 0원이다. ⑥ 결제는 외부 카드 단말기 SDK 를 호출한다. ⑦ 만차면 입차를 거부한다.
+> ① 맡긴 옷은 접수번호로 식별한다. 접수번호는 `L-2405-013` 형식이다(`L-` + 연월 네 자리 + `-` + 일련번호 세 자리). ② 접수하면 품목 종류와 접수 시각이 기록된다. ③ 찾아갈 때 요금을 계산해 정산한다. ④ 요금은 품목 종류별 기본요금이고, 급행이면 50%를 더 받는다. ⑤ 단골 회원은 총액의 10%를 깎는다. ⑥ 결제는 외부 카드 단말기 SDK 를 호출한다. ⑦ 보관대가 꽉 차면 접수를 거부한다.
 
 **1. 실패를 분류해라 (코드 없이, 표로).**
 아래 일곱 가지 실패 각각에 대해 `예외` / `None` / `빈 컬렉션` / `기본값` 중 하나를 고르고, **한 줄로 근거**를 적어라. 근거에 "관례상"을 쓰지 마라.
 
-1. `find_ticket("12가3456")` — 입차 기록이 없다
-2. `enter("12가3456")` — 이미 입차해 있다
-3. `enter("12가3456")` — 만차다
-4. `parse_plate("12가")` — 번호 형식이 아니다
-5. `fee(minutes=-5)` — 음수 시간
-6. `exit_and_pay(...)` — 카드 단말기가 응답하지 않는다
-7. `list_parked_cars()` — 주차된 차가 한 대도 없다
+1. `find_order("L-2405-013")` — 그런 접수 기록이 없다
+2. `accept("L-2405-013", ...)` — 이미 접수된 번호다
+3. `accept(...)` — 보관대가 꽉 찼다
+4. `parse_ticket("L-2405")` — 접수번호 형식이 아니다
+5. `base_fee("가죽코트")` — 요금표에 없는 품목이다
+6. `pick_up_and_pay(...)` — 카드 단말기가 응답하지 않는다
+7. `list_pending()` — 아직 안 찾아간 옷이 한 벌도 없다
+
+5번은 이 절의 `dict.get(k, 0)` 이야기를 그대로 다시 만나는 자리다. 답을 고르기 전에 **기본값을 0원으로 두면 누가 언제 그걸 알아채는지** 한 줄로 써 봐라.
 
 **2. 예외 계층을 코드로 써라.**
 `errors.py` 한 파일. 클래스마다 **어떤 호출자가 그것만 따로 잡는지**를 독스트링에 한 줄로 적어라. 못 적는 클래스는 지워라. 완성한 뒤 클래스 개수를 세고, 그 숫자가 요구사항의 규칙 수를 넘지 않는지 확인해라.
 
 **3. 원자성을 깨뜨려 봐라.**
-`exit_and_pay(plate)` 를 **일부러 틀리게** 짜라 — 정산 기록을 먼저 지우고 결제를 나중에 호출하는 순서로. 그리고 결제가 거절되는 가짜 단말기를 주입해 **차는 나갔는데 돈은 안 받은 상태**를 재현하는 pytest 테스트를 써라. 테스트가 실패하는 것을 눈으로 본 뒤에 순서를 고쳐 통과시켜라.
+`pick_up_and_pay(ticket)` 를 **일부러 틀리게** 짜라 — 보관 기록을 먼저 지우고 결제를 나중에 호출하는 순서로. 그리고 결제가 거절되는 가짜 단말기를 주입해 **옷은 나갔는데 돈은 안 받은 상태**를 재현하는 pytest 테스트를 써라. 테스트가 실패하는 것을 눈으로 본 뒤에 순서를 고쳐 통과시켜라.
 
 **4. 경계를 번역해라.**
 카드 단말기 SDK 가 `TerminalBusy`, `CardDeclined`, `TerminalOffline` 세 가지를 던진다고 하자. 각각을 **번역할 것 / 통과시킬 것**으로 나누고, 진입점의 `except` 절이 **최대 세 개를 넘지 않게** 설계해라. 나눈 기준을 README 형식의 한 문단으로 적어라.

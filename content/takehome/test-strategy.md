@@ -56,10 +56,21 @@ def test_new_lot_is_empty():
 ```
 
 ```text nolines
-$ pytest -q
+$ pytest -q junk
 ....                                                                     [100%]
 4 passed in 0.01s
 ```
+
+::: note 이 절의 실행 전제
+이 절의 출력은 전부 **저장소 최상단**에서 돌린 것이다. 거기에 `parking/` 과 `tests/`, 그리고 지금 지우려는 `junk/` 가 나란히 있다. 그 배치에서 `from parking.fees import fee` 가 되려면 `pyproject.toml` 에 설정 한 줄이 필요하다.
+
+```toml title="pyproject.toml"
+[tool.pytest.ini_options]
+pythonpath = ["."]
+```
+
+이게 없으면 테스트가 실패하는 게 아니라 **수집 단계에서 죽는다** — `ModuleNotFoundError: No module named 'parking'` 이 뜨고 `3 errors` 로 끝난다. 왜 `conftest.py` 가 아니라 이 한 줄이 정답인지는 [12.1](#/takehome-eval)에서 실측과 함께 정했다. 아래의 모든 실행은 이 설정이 있다고 가정한다.
+:::
 
 하나씩 무엇을 검증하고 있는지 보자.
 
@@ -93,6 +104,8 @@ TOTAL                    70     26     14      3    56%
 ```
 
 (Python 3.14.0rc2 / Linux 기준 실측. 절대값은 기기마다 다르지만 자릿수 차이는 어디서나 같다.)
+
+`parking/__init__.py` 가 0줄인 것은 **이 시점에는 그 파일이 정말로 비어 있기 때문**이다. 거기에 공개 API를 선언하는 이야기는 [12.7](#/project-structure)에 있다. 그 열 줄을 넣고 같은 명령을 다시 돌리면 해당 행이 `4 0 0 0 100%` 가 되고 TOTAL 은 `74 26 14 3 58%` 로 바뀐다. **테스트를 한 줄도 안 쓰고 커버리지가 2%p 오른다.** `import` 세 줄과 `__all__` 하나가 늘었을 뿐인데, 그 네 줄은 import 되는 순간 전부 실행되므로 언제나 100%다.
 
 **규칙을 하나도 검증하지 않은 네 개의 테스트가 56%를 만든다.** 커버리지를 목표로 삼으면 사람은 정확히 이런 테스트를 쓰게 된다. 규칙을 파고드는 것보다 훨씬 쉽고 숫자는 더 빨리 오르기 때문이다.
 :::
@@ -217,7 +230,7 @@ Arrange–Act–Assert 라고도 부른다. 이름만 다르다. 굳이 주석�
 
 반대로 이렇게 묶으면 안 된다.
 
-```python title="demo/test_lumped.py — 관계없는 규칙 세 개를 한 테스트에"
+```python title="test_lumped.py — 관계없는 규칙 세 개를 한 테스트에"
 def test_parking_lot():
     lot = ParkingLot(capacity=1)
     lot.enter("11A1111", at=0)
@@ -356,7 +369,9 @@ def test_leaving_without_settling_is_rejected():        # 절반
         lot.leave("11A1111", at=40)
 ```
 
-예외가 났다는 것만 확인했다. **예외가 난 뒤 시스템이 어떤 상태인지는 아무도 안 물어봤다.** 실제로 여기서 사고가 난다 — 자리를 먼저 비우고 검사를 나중에 하는 구현이면, 이 테스트는 통과하는데 주차면 하나가 영원히 사라진다.
+예외가 났다는 것만 확인했다. **예외가 난 뒤 시스템이 어떤 상태인지는 아무도 안 물어봤다.** 실제로 여기서 사고가 난다 — `leave()` 가 `self._tickets.pop(plate)` 로 **자리를 먼저 비우고** 정산 여부를 나중에 검사하는 구현이면, 위 테스트는 그대로 통과한다. `NotSettled` 는 정확히 났으니까.
+
+그런데 그 예외가 나가는 순간 티켓은 이미 지워져 있다. **차는 그대로 서 있는데 시스템은 그 면을 빈자리로 안다.** `free_spaces` 는 줄어드는 게 아니라 0에서 1로 **늘어나고**, 시스템은 그 한 면을 다음 차에게 다시 판다. 그리고 원래 차는 티켓이 사라져서 정산도 출차도 못 한다 — `settle()` 을 부르면 `NotParked` 가 난다. 즉 **한 면이 이중으로 팔리고, 한 대는 영원히 못 나간다.** 아래 테스트가 이 구현에서 내는 메시지가 `assert 1 == 0` 인 이유가 그것이다.
 
 ```python title="tests/test_lot.py — 실패 뒤의 상태까지 본다"
 def test_leaving_without_settling_is_rejected_and_keeps_the_ticket():
@@ -455,7 +470,7 @@ def test_thirty_minutes_exactly_is_still_free():
 
 ```text nolines
 $ pytest -q --tb=no --cov=fees --cov-branch
-...F                                                                     [100%]
+F...                                                                     [100%]
 ================================ tests coverage ================================
 _____________ coverage: platform linux, python 3.14.0-candidate-2 ______________
 
@@ -470,6 +485,8 @@ FAILED test_boundary.py::test_thirty_minutes_exactly_is_still_free - assert 1...
 ```
 
 (Python 3.14.0rc2 / Linux 기준 실측. 절대값은 기기마다 다르지만 자릿수 차이는 어디서나 같다.)
+
+진행 표시줄에서 `F` 가 **맨 앞**인 것에 놀라지 마라. pytest는 디렉터리 안의 테스트 파일을 **경로 사전순**으로 수집하고, `test_boundary.py` 가 `test_fees.py` 보다 앞선다. 파일 이름을 `test_zboundary.py` 로 바꾸면 같은 실행이 `...F` 가 된다. **표시줄의 순서는 실행 순서지 중요도 순서가 아니다.**
 
 커버리지가 답하는 질문은 딱 하나다 — **"이 줄이 한 번이라도 실행됐는가."** 그 줄이 **옳은 값을 냈는가**는 묻지 않는다. 부등호 버그, off-by-one, 잘못된 상수는 커버리지가 원리적으로 못 잡는다.
 

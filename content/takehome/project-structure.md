@@ -49,7 +49,7 @@ B는 반대다. 디렉터리가 **열세 개**인데 그중 **파일이 두 개 
 
 ```bash
 $ wc -l parking.py
-110 parking.py
+109 parking.py
 ```
 
 빈 줄과 주석을 빼면 80줄이다. **이 규모에서 파일을 쪼갤 이유는 없다.** "파일이 하나면 아마추어처럼 보인다"는 걱정 때문에 디렉터리를 만드는 것은, 읽는 사람에게 아무것도 주지 않으면서 찾는 비용만 올리는 일이다.
@@ -70,12 +70,12 @@ $ wc -l parking.py
 
 ### 신호 ① 테스트가 두 무리로 갈린다
 
-이 절에서 실제로 돌리는 스위트는 22개다. 그 22개가 이렇게 갈린다.
+이 절에서 실제로 돌리는 스위트는 22개다. [12.6](#/test-strategy)의 20개와 두 개가 다른데, **그 차이가 곧 이 절의 주제다.** 도장 할인 두 개(`test_a_stamp_discounts_thirty_minutes`, `test_stamps_are_capped_at_two`)를 `test_lot.py` 에서 `test_fees.py` 로 옮겼고, 티켓에 찍힌 도장의 상한(`test_stamps_are_capped_at_two_on_the_ticket`)과 입차부터 출차까지의 전체 흐름(`test_a_full_visit_from_entry_to_exit`) 하나씩을 더했다. 옮긴 이유는 하나다 — 도장 할인은 정수를 넣고 정수를 받는 계산이라 `ParkingLot` 이 필요 없다. 그 22개가 이렇게 갈린다.
 
 | 테스트 | `ParkingLot` 을 만드는가 | 검증 대상 | 수 |
 | --- | --- | --- | --- |
 | 요금 경계, 일 상한, 도장 할인, 음수 거부 | **안 만든다** | 정수 → 정수 | 13 |
-| 만차·중복·미등록 거부, 정산·출차 전이 | 만든다 | 상태 전이 | 9 |
+| 만차·중복·미등록 거부, 정산·출차 전이, 티켓 도장 상한, 전체 흐름 | 만든다 | 상태 전이 | 9 |
 
 **앞의 13개는 객체를 하나도 안 만든다.** 정수를 넣고 정수를 받는다. 뒤의 9개는 전부 `ParkingLot(capacity=...)` 로 시작한다. 테스트 파일을 쓰다가 `import` 줄이 두 무리로 갈리는 순간이 왔다면, **소스도 이미 두 개다.** 당신은 그걸 테스트를 통해 발견한 것뿐이다.
 
@@ -102,12 +102,13 @@ for path in sorted(pathlib.Path("parking").glob("*.py")):
 ```text nolines
 $ python tools/deps.py
 __init__.py  ['.errors', '.fees', '.lot']
+__main__.py  ['.errors', '.lot']
 errors.py    []
 fees.py      []
 lot.py       ['.errors', '.fees', 'dataclasses']
 ```
 
-이 네 줄이 설계 문서다. **`errors.py` 와 `fees.py` 의 import 목록이 비어 있다.** 아무것도 의존하지 않는다는 뜻이고, 그래서 아무 데서나 부를 수 있고, 테스트가 가장 싸다. `lot.py` 는 그 둘을 쓴다. 화살표가 한 방향으로만 간다.
+이 다섯 줄이 설계 문서다. **`errors.py` 와 `fees.py` 의 import 목록이 비어 있다.** 아무것도 의존하지 않는다는 뜻이고, 그래서 아무 데서나 부를 수 있고, 테스트가 가장 싸다. `lot.py` 는 그 둘을 쓴다. 화살표가 한 방향으로만 간다.
 
 ```text nolines
    errors.py      fees.py         <- import 가 없다. 표준 라이브러리조차 안 쓴다
@@ -318,8 +319,22 @@ tests/                              ├── test_fees.py
 | --- | --- | --- |
 | 배포물 | 테스트가 안 들어간다 | 사용자가 테스트까지 설치한다 |
 | 첫인상 | 트리 최상단에서 테스트가 보인다 | 소스를 헤집어야 보인다 |
-| 테스트 실행 | 소스가 import 가능해야 한다 | 패키지 경로로 그냥 된다 |
+| 테스트 실행 | 소스가 import 가능해야 한다 | 패키지 경로로 된다 — 단 `tests/` 에도 `__init__.py` 가 있어야 한다 |
 | 쓰는 곳 | 애플리케이션, 과제 제출물 | 배포되는 라이브러리(`numpy` 등) |
+
+마지막 칸의 단서를 빼먹으면 안 된다. 안 2가 "된다"는 것은 **`pythonpath` 설정도 설치도 없이 된다**는 뜻인데, 그건 `parking/tests/` 에도 `__init__.py` 가 있을 때만 참이다. 아래에서 설명할 pytest의 `prepend` 규칙이 그대로 낳는 결과다. `__init__.py` 가 있으면 pytest는 그 사슬을 따라 `parking/` 을 지나 저장소 루트까지 올라가고, **루트를** `sys.path` 에 넣고 모듈 이름을 `parking.tests.test_fees` 로 잡는다. 그래서 `import parking` 이 저절로 된다. 없으면 `parking/tests` 자체가 `sys.path` 에 들어가고 모듈 이름은 `test_fees` 가 되며, 루트는 아무 데도 안 들어간다. 테스트 첫 줄의 `from parking.fees import fee` 가 안 1과 똑같이 죽는다.
+
+```text nolines
+$ pytest -q
+E   ModuleNotFoundError: No module named 'parking'      <- 트레이스백에서 이 줄만 남겼다
+=========================== short test summary info ============================
+ERROR parking/tests/test_fees.py
+ERROR parking/tests/test_lot.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+2 errors in 0.10s
+```
+
+`touch parking/tests/__init__.py` 하나로 같은 스위트가 `22 passed` 가 된다. **빈 파일 하나가 이 칸의 전제다.** `numpy` 가 `numpy/fft/tests/__init__.py` 처럼 테스트 디렉터리마다 빈 파일을 두고 있는 것도 이 때문이다(2.5.1 기준 열두 개). 물론 안 1처럼 `pythonpath` 를 적어 두면 `__init__.py` 없이도 돈다 — 그러면 안 2가 사려던 "설정이 필요 없다"가 사라진다.
 
 **과제형은 안 1이다.** 이유가 기술이 아니다. 평가자가 저장소를 열었을 때 **`tests/` 가 최상단에 보이는 것 자체가 신호**이기 때문이다. 12.1에서 본 관문 4("테스트가 있는가")를 트리만 보고 통과한다.
 
@@ -559,7 +574,7 @@ charging-station/
 │   ├── station.py                <- 규칙. ports 만 안다
 │   ├── adapters.py               <- 진짜 구현. socket 이 여기에만
 │   ├── fakes.py                  <- 가짜 구현
-│   └── __main__.py
+│   └── __main__.py               <- 12.4 의 main.py 를 python -m charger 가 되게 바꾼 것
 └── tests/
     ├── test_pricing.py
     └── test_station.py
@@ -631,19 +646,19 @@ ROS 패키지 구조([10.2](#/ros-workspace))도 정확히 같은 문제다. 순
 **1. 쪼개기 판단 (15분, 코드 없음 → 그 다음 코드)**
 아래 요구사항을 읽고 **파일 목록**을 먼저 적어라. 파일마다 "이 파일이 import 하는 것"을 함께 적고, 화살표가 한 방향인지 확인해라. 그 다음 규모 A·B·C 중 무엇인지 판정하고 이유를 한 줄로 써라.
 
-> **[과제] 도서 대출 관리**
-> ① 회원은 최대 5권까지 빌린다. ② 대출 기간은 14일이고, 연장은 1회 7일. ③ 연체 중인 회원은 대출도 연장도 못 한다. ④ 연체료는 하루 100원, 권당 최대 3,000원. ⑤ 예약된 책은 연장할 수 없다. ⑥ 반납은 언제나 가능하다.
+> **[과제] 공연장 좌석 점유**
+> ① 한 관객은 공연 하나에 최대 4석까지 잡는다. ② 점유는 20분간 유지되고, 연장은 1회 10분. ③ 만료된 점유가 남아 있는 관객은 새로 잡지도 연장하지도 못 한다. ④ 재점유 수수료는 10분당 500원, 좌석당 최대 3,000원. ⑤ 이미 발권된 좌석은 연장할 수 없다. ⑥ 점유 해제는 언제나 가능하다.
 
 **2. 화살표 검사 (15분, 코드)**
 1번의 구조를 실제로 만들고, 본문의 `tools/deps.py` 를 그대로 써서 각 모듈의 import 목록을 출력해라. **import 목록이 비어 있는 모듈이 최소 하나 있어야 한다.** 없다면 순수 계산을 분리하지 못한 것이다 — 분리하고 다시 돌려라.
 
 **3. 네임스페이스 패키지 사고 재현 (20분, 코드)**
-본문의 실험을 직접 재현해라. ① `__init__.py` 없는 `library/` 를 만들고 ② 다른 디렉터리에 같은 이름의 `library/` 를 만들어 그 안에만 있는 모듈을 import 해 보라. ③ `library.__file__` 과 `library.__path__` 를 출력해라. ④ `__init__.py` 를 추가하고 셋을 다시 출력해 무엇이 달라졌는지 적어라.
+본문의 실험을 직접 재현해라. ① `__init__.py` 없는 `seating/` 를 만들고 ② 다른 디렉터리에 같은 이름의 `seating/` 를 만들어 그 안에만 있는 모듈을 import 해 보라. ③ `seating.__file__` 과 `seating.__path__` 를 출력해라. ④ `__init__.py` 를 추가하고 셋을 다시 출력해 무엇이 달라졌는지 적어라.
 
 그다음 **더 아픈 쪽**을 재현해라. 두 번째 디렉터리에만 `__init__.py` 를 두고, 당신 소스를 `sys.path` **맨 앞**에 넣은 뒤 import 해라. **어느 쪽이 이기는가.** 결과를 보고 한 줄로 설명해라.
 
 **4. 두 배치 비교 (25분, 코드)**
-1번 프로젝트를 평평한 배치와 `src/` 배치로 **둘 다** 만들어라. 각각에서 가상환경에 설치한 뒤 소스 파일에 `MARKER = "..."` 한 줄을 추가하고, `python -c "import library.x as m; print(m.__file__, getattr(m, 'MARKER', '없음'))"` 를 돌려라. 두 결과가 다른 이유를 한 문장으로 적고, **이 과제에 어느 쪽을 낼 것인지와 그 이유**를 README 형식으로 세 줄 적어라.
+1번 프로젝트를 평평한 배치와 `src/` 배치로 **둘 다** 만들어라. 각각에서 가상환경에 설치한 뒤 소스 파일에 `MARKER = "..."` 한 줄을 추가하고, `python -c "import seating.x as m; print(m.__file__, getattr(m, 'MARKER', '없음'))"` 를 돌려라. 두 결과가 다른 이유를 한 문장으로 적고, **이 과제에 어느 쪽을 낼 것인지와 그 이유**를 README 형식으로 세 줄 적어라.
 
 **5. 순환 만들고 풀기 (15분, 코드)**
 1번 구조에 **일부러 순환 import 를 만들어라.** 순수 계산 모듈이 도메인 객체를 import 하게 만들면 된다. `ImportError` 전문을 출력으로 남기고, 스택에 찍힌 파일 순서로 순환 경로를 그려라. 그다음 **`__init__.py` 를 고치지 말고** 순환을 풀어라.
@@ -652,18 +667,18 @@ ROS 패키지 구조([10.2](#/ros-workspace))도 정확히 같은 문제다. 순
 아래 트리를 받았다고 하자. **규모 B로 줄여라.** 줄인 트리를 그리고, 없앤 디렉터리마다 "이게 사라져도 잃는 것이 없는 이유"를 한 줄씩 적어라. 반대로 **하나는 남기고** 왜 남기는지도 적어라.
 
 ```text nolines
-library-system/
+seating-system/
 ├── src/
-│   └── library/
+│   └── seating/
 │       ├── core/
 │       │   └── base/
 │       │       └── entity.py
 │       ├── domain/
 │       │   ├── models/
-│       │   │   ├── member.py
-│       │   │   └── book.py
+│       │   │   ├── guest.py
+│       │   │   └── seat.py
 │       │   └── services/
-│       │       └── loan_service.py
+│       │       └── hold_service.py
 │       ├── application/
 │       │   └── dto/
 │       ├── infrastructure/
@@ -677,7 +692,7 @@ library-system/
 ├── scripts/
 └── tests/
     └── unit/
-        └── test_loan_service.py
+        └── test_hold_service.py
 ```
 
 **7. 3분 점검 자동화 (10분, 코드)**
