@@ -7,11 +7,19 @@
 
 **PC** — `index.html` 을 더블클릭한다. 끝이다.
 
-**휴대폰** — PC에서 아래를 실행하고, 같은 와이파이에 연결된 폰에서 출력된
-`http://192.168.x.x:8800` 주소를 연다. 홈 화면에 추가하면 앱처럼 쓸 수 있다.
+**휴대폰** — 세 가지 방법이 있다. 상황에 맞는 걸 쓰면 된다.
+
+| 방법 | 어떻게 | 언제 |
+| --- | --- | --- |
+| **GitHub Pages** | 저장소 Settings → Pages → Source 를 `main` / `/ (root)` 로 두면 `https://<계정>.github.io/Pythonic/` 이 생긴다. 폰에서 열고 홈 화면에 추가 | 평소. 푸시하면 알아서 최신이 된다 |
+| **단일 파일** | `pybook.html` 하나를 폰에 옮겨서 연다. 저장소에 커밋돼 있으니 폰에서 GitHub 으로 받아도 된다 | 지하철·비행기 등 인터넷이 없을 때 |
+| **로컬 서버** | PC에서 `python build.py --serve`, 같은 와이파이의 폰에서 출력된 `http://192.168.x.x:8800` 을 연다 | 본문을 고치면서 폰으로 바로 확인할 때 |
+
+`pybook.html` 은 CSS·JS·본문 148절을 전부 집어넣은 **4.3 MB짜리 파일 하나**다.
+외부 요청이 하나도 없어서 비행기 모드에서도 그대로 돈다. 본문을 고쳤으면 다시 만든다.
 
 ```bash
-python build.py --serve
+python build.py --single
 ```
 
 ## 쓰는 법
@@ -56,10 +64,11 @@ assets/
   app.js            라우팅 · 목차 · 검색 · 진도
   game.js           레벨 · 성장하는 세계 · 동료 도감 · 이펙트
   bundle.js         빌드 산출물 (build.py 가 생성)
+pybook.html         전부 합친 단일 파일 (휴대폰용, build.py --single)
 content/
   toc.json          책의 목차 — 여기가 뼈대다
   <part>/<id>.md    각 절의 본문
-build.py            content/ -> assets/bundle.js
+build.py            content/ -> assets/bundle.js (+ --single 로 pybook.html)
 tools/
   check_diagrams.py 아스키 다이어그램 정렬 검사
   make_sprites.py   픽셀 스프라이트를 style.css 에 심는다

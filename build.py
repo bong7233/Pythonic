@@ -51,8 +51,11 @@ def stamp_versions() -> str:
 
     html = INDEX.read_text(encoding="utf-8")
     for rel in ASSETS:
+        # 기존 쿼리스트링은 형태와 무관하게 통째로 걷어낸다.
+        # \?v=[0-9a-f]+ 로만 잡으면 손으로 넣은 ?v=x 같은 것이 남아
+        # ?v=<해시>?v=x 로 겹쳐 붙는다. 실제로 그런 적이 있다.
         html = re.sub(
-            rf'({re.escape(rel)})(\?v=[0-9a-f]+)?',
+            rf'({re.escape(rel)})(\?[^"\']*)?',
             rf"\1?v={ver}",
             html,
         )
@@ -228,15 +231,63 @@ def lint_content() -> None:
         print(r.stdout.strip())
 
 
+SINGLE = ROOT / "pybook.html"
+
+
+def build_single() -> None:
+    """CSS·JS·본문을 index.html 안에 전부 집어넣어 파일 하나로 만든다.
+
+    왜 필요한가: 휴대폰에는 파이썬이 없어서 build.py 를 못 돌리고,
+    index.html 만 옮겨 봐야 assets/ 를 못 찾는다. 파일 하나면 메일이든
+    메신저든 클라우드든 아무거나로 옮겨서 그냥 열면 된다. 인터넷도 필요 없다.
+    """
+    report(build())  # 먼저 번들을 최신으로
+
+    html = INDEX.read_text(encoding="utf-8")
+
+    def inline_css(m: re.Match) -> str:
+        css = (ROOT / "assets" / "style.css").read_text(encoding="utf-8")
+        return "<style>\n" + css + "\n</style>"
+
+    html = re.sub(
+        r'<link rel="stylesheet" href="assets/style\.css[^"]*">', inline_css, html
+    )
+
+    def inline_js(m: re.Match) -> str:
+        src = (ROOT / "assets" / m.group(1)).read_text(encoding="utf-8")
+        # 문자열 안에 </script> 가 있으면 태그가 거기서 닫혀 버린다.
+        # JSON·JS 문자열 안에서 <\/script> 는 같은 값으로 읽히므로 안전하다.
+        src = src.replace("</script", "<\\/script")
+        return "<script>\n" + src + "\n</script>"
+
+    html = re.sub(r'<script src="assets/([a-z]+\.js)[^"]*"></script>', inline_js, html)
+
+    # 실제 태그 참조만 본다. 그냥 "assets/" 로 검사하면 인라인된 CSS·JS 주석에
+    # 적힌 파일 경로까지 잡아서 멀쩡한 빌드가 실패한다.
+    left = re.findall(r'(?:src|href)="assets/[^"]*"', html)
+    if left:
+        raise SystemExit(f"[에러] 인라인되지 않은 참조가 남았습니다: {left}")
+
+    SINGLE.write_text(html, encoding="utf-8", newline="\n")
+    print(
+        f"\n단일 파일: {SINGLE.name} ({SINGLE.stat().st_size / 1024 / 1024:.1f} MB)\n"
+        "  이 파일 하나만 휴대폰으로 옮겨서 열면 된다. 서버도 인터넷도 필요 없다."
+    )
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="파이썬 완전 정복 — 빌드 스크립트")
     ap.add_argument("--watch", action="store_true", help="파일 변경 시 자동 재빌드")
     ap.add_argument("--serve", action="store_true", help="로컬 서버 실행 (휴대폰 접속용)")
+    ap.add_argument("--single", action="store_true",
+                    help="pybook.html 하나로 합치기 (휴대폰에 옮겨서 여는 용도)")
     ap.add_argument("--port", type=int, default=8800)
     ap.add_argument("--no-lint", action="store_true", help="다이어그램 검사 건너뛰기")
     args = ap.parse_args()
 
-    if args.serve:
+    if args.single:
+        build_single()
+    elif args.serve:
         serve(args.port)
     elif args.watch:
         watch()
